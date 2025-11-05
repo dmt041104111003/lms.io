@@ -96,7 +96,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
 
       <div className="mt-4 sm:mt-5 space-y-2">
         <SocialAuthButton provider="google" />
-        <SocialAuthButton provider="email" />
+        <SocialAuthButton provider="github" />
       </div>
     </>
   );

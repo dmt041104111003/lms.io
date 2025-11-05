@@ -163,14 +163,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSubmit }) => {
 
       <Divider className="mt-4 sm:mt-5" />
 
-      <div className="mt-4 sm:mt-5 space-y-2">
-        <SocialAuthButton provider="google">
-          Sign up with Google
-        </SocialAuthButton>
-        <SocialAuthButton provider="email">
-          Sign up with Email
-        </SocialAuthButton>
-      </div>
+
     </>
   );
 };
