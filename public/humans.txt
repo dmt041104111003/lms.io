@@ -1,0 +1,18 @@
+/* TEAM */
+    Developer: Cardano2VN Team
+    Contact: contact@cardano2vn.io
+    From: Vietnam
+    Twitter: @cardano2vn
+    GitHub: cardano2vn
+
+/* SITE */
+    Last update: 2025/01/19
+    Language: English, Vietnamese
+    Doctype: HTML5
+    IDE: Visual Studio Code
+    Standards: HTML5, CSS3, JavaScript ES6+
+    Components: React, Next.js, TypeScript
+    Software: Node.js, Prisma, Tailwind CSS
+    Framework: Next.js 14
+    Database: PostgreSQL
+    Deployment: Vercel
