@@ -1,6 +1,7 @@
 import React from 'react';
 import Toast, { ToastType } from './Toast';
 
+export type { ToastType };
 export interface ToastData {
   id: string;
   message: string;
