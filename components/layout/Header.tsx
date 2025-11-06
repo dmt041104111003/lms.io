@@ -68,7 +68,14 @@ const Header: React.FC = () => {
             >
               Courses
             </Link>
-  
+            <a
+              href="https://cardano2vn.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
+            >
+              Blog
+            </a>
           </nav>
 
           {/* Right side - User menu or Sign In buttons */}
@@ -184,6 +191,15 @@ const Header: React.FC = () => {
               >
                 Courses
               </Link>
+              <a
+                href="https://cardano2vn.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Blog
+              </a>
 
               <div className="border-t border-gray-200 mt-2 pt-2">
                 {isAuthenticated && user ? (

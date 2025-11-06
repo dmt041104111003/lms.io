@@ -1,11 +1,20 @@
 import React from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminGuard from '@/components/admin/AdminGuard';
+import SEO from '@/components/ui/SEO';
 import Card from '@/components/ui/Card';
 
 const AdminDashboard: React.FC = () => {
   return (
     <AdminGuard>
+      <SEO
+        title="Admin Dashboard - Cardano2VN LMS"
+        description="Admin dashboard for managing users, courses, and system settings."
+        keywords="admin, dashboard, management, Cardano LMS admin"
+        url="/admin"
+        noindex={true}
+        nofollow={true}
+      />
       <AdminLayout>
         <div className="space-y-6">
           <div>

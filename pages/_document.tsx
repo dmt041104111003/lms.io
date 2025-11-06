@@ -9,6 +9,9 @@ export default function Document() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Potta+One&display=swap" rel="stylesheet" />
+        <link rel="icon" type="image/png" href="/images/common/loading.png" />
+        <link rel="shortcut icon" type="image/png" href="/images/common/loading.png" />
+        <link rel="apple-touch-icon" href="/images/common/loading.png" />
       </Head>
       <body>
         <Main />

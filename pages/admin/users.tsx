@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminGuard from '@/components/admin/AdminGuard';
+import SEO from '@/components/ui/SEO';
 import UserTable from '@/components/admin/UserTable';
 import adminService, { UserResponse, PageResponse, RoleResponse } from '@/services/adminService';
 import Card from '@/components/ui/Card';
@@ -55,6 +56,14 @@ const AdminUsers: React.FC = () => {
 
   return (
     <AdminGuard>
+      <SEO
+        title="Users Management - Cardano2VN LMS Admin"
+        description="Manage and monitor all users in the system. View, edit, ban, and delete users."
+        keywords="admin, users, user management, Cardano LMS admin"
+        url="/admin/users"
+        noindex={true}
+        nofollow={true}
+      />
       <AdminLayout>
         <div className="space-y-4 sm:space-y-6">
           <div>

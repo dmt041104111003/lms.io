@@ -6,6 +6,7 @@ import BrandingSection from '@/components/login/BrandingSection';
 import SignupForm from '@/components/signup/SignupForm';
 import GuestGuard from '@/components/auth/GuestGuard';
 import ToastContainer from '@/components/ui/ToastContainer';
+import SEO from '@/components/ui/SEO';
 import { useToast } from '@/hooks/useToast';
 import authService from '@/services/authService';
 
@@ -69,6 +70,14 @@ const Signup: React.FC = () => {
 
   return (
     <GuestGuard>
+      <SEO
+        title="Sign Up - lms.cardano2vn.io"
+        description="Create your free Cardano2VN LMS account and start learning blockchain, Cardano, and cryptocurrency. Join thousands of students today."
+        keywords="signup, register, create account, Cardano LMS, free account"
+        url="/signup"
+        noindex={true}
+        nofollow={true}
+      />
       <Layout hideHeader={true} hideFooter={true}>
         <div className="min-h-screen lg:h-screen flex flex-col lg:overflow-hidden">
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 lg:overflow-hidden">

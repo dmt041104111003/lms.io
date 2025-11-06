@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import InstructorLayout from '@/components/instructor/InstructorLayout';
 import InstructorGuard from '@/components/instructor/InstructorGuard';
+import SEO from '@/components/ui/SEO';
 import CourseTable from '@/components/instructor/CourseTable';
 import instructorService, { CourseResponse, PageResponse } from '@/services/instructorService';
 import Card from '@/components/ui/Card';
@@ -41,6 +42,14 @@ const InstructorCourses: React.FC = () => {
 
   return (
     <InstructorGuard>
+      <SEO
+        title="Courses Management - Cardano2VN LMS Instructor"
+        description="Manage your courses, create new courses, edit existing ones, and track student enrollments."
+        keywords="instructor, courses, course management, create course, Cardano LMS instructor"
+        url="/instructor/courses"
+        noindex={true}
+        nofollow={true}
+      />
       <InstructorLayout>
         <div className="space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

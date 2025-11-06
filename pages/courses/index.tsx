@@ -1,6 +1,7 @@
 import React from 'react';
 import Layout from '@/components/layout/Layout';
 import CourseList from '@/components/course/CourseList';
+import SEO from '@/components/ui/SEO';
 
 const CoursesPage: React.FC = () => {
   // Demo data - replace with actual API call
@@ -86,15 +87,23 @@ const CoursesPage: React.FC = () => {
   ];
 
   return (
-    <Layout>
-      <div className="min-h-[calc(100vh-200px)] py-6">
-        <CourseList 
-          courses={courses} 
-          totalResults={150}
-          searchQuery=""
-        />
-      </div>
-    </Layout>
+    <>
+      <SEO
+        title="Courses - lms.cardano2vn.io"
+        description="Browse our comprehensive collection of blockchain and Cardano courses. Find free and premium courses taught by expert instructors."
+        keywords="courses, Cardano courses, blockchain courses, free courses, premium courses, online learning"
+        url="/courses"
+      />
+      <Layout>
+        <div className="min-h-[calc(100vh-200px)] py-6">
+          <CourseList 
+            courses={courses} 
+            totalResults={150}
+            searchQuery=""
+          />
+        </div>
+      </Layout>
+    </>
   );
 };
 

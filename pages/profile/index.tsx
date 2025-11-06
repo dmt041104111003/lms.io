@@ -8,6 +8,7 @@ import PersonalInfoTab from '@/components/profile/PersonalInfoTab';
 import SecurityTab from '@/components/profile/SecurityTab';
 import PreferencesTab from '@/components/profile/PreferencesTab';
 import LogoutButton from '@/components/profile/LogoutButton';
+import SEO from '@/components/ui/SEO';
 import authService, { UserResponse } from '@/services/authService';
 
 const Profile: React.FC = () => {
@@ -40,6 +41,14 @@ const Profile: React.FC = () => {
 
   return (
     <AuthGuard>
+      <SEO
+        title="Profile - lms.cardano2vn.io"
+        description="Manage your Cardano2VN LMS account settings, update your profile information, and customize your preferences."
+        keywords="profile, account settings, user profile, Cardano LMS profile"
+        url="/profile"
+        noindex={true}
+        nofollow={true}
+      />
       <Layout>
         <div className="min-h-screen bg-gray-50">
           {user && <ProfileHeader user={user} />}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import InstructorLayout from '@/components/instructor/InstructorLayout';
 import InstructorGuard from '@/components/instructor/InstructorGuard';
+import SEO from '@/components/ui/SEO';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import instructorService, { CourseDashboardResponse } from '@/services/instructorService';
@@ -40,6 +41,14 @@ const InstructorDashboard: React.FC = () => {
 
   return (
     <InstructorGuard>
+      <SEO
+        title="Instructor Dashboard - lms.cardano2vn.io"
+        description="Manage your courses, track student progress, and view analytics in your instructor dashboard."
+        keywords="instructor, dashboard, course management, Cardano LMS instructor"
+        url="/instructor"
+        noindex={true}
+        nofollow={true}
+      />
       <InstructorLayout>
         <div className="space-y-4 sm:space-y-6">
           <div>
