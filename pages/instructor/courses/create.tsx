@@ -17,7 +17,6 @@ const CreateCourse: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
   const { toasts, removeToast, success, error } = useToast();
-  const [loading, setLoading] = useState(false);
   const [instructorProfileId, setInstructorProfileId] = useState<number | null>(null);
   const [formData, setFormData] = useState<CourseCreationRequest>({
     title: '',
@@ -140,8 +139,6 @@ const CreateCourse: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
       const courseData = {
         ...formData,
@@ -153,8 +150,6 @@ const CreateCourse: React.FC = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create course';
       error(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -228,9 +223,9 @@ const CreateCourse: React.FC = () => {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={loading || !instructorProfileId}
+                  disabled={!instructorProfileId}
                 >
-                  {loading ? 'Creating...' : 'Create Course'}
+                  Create Course
                 </Button>
                 <Button
                   type="button"

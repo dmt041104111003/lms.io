@@ -4,14 +4,12 @@ import authService, { UserResponse } from '@/services/authService';
 interface UseAuthReturn {
   user: UserResponse | null;
   isAuthenticated: boolean;
-  loading: boolean;
   refresh: () => Promise<void>;
 }
 
 export const useAuth = (): UseAuthReturn => {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
     try {
@@ -21,8 +19,6 @@ export const useAuth = (): UseAuthReturn => {
     } catch (error) {
       setUser(null);
       setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -33,7 +29,6 @@ export const useAuth = (): UseAuthReturn => {
   return {
     user,
     isAuthenticated,
-    loading,
     refresh,
   };
 };

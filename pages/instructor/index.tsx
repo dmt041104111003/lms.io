@@ -14,7 +14,6 @@ const InstructorDashboard: React.FC = () => {
   const { user } = useAuth();
   const { toasts, removeToast } = useToast();
   const [dashboardData, setDashboardData] = useState<CourseDashboardResponse[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -28,8 +27,6 @@ const InstructorDashboard: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to fetch dashboard:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -120,13 +117,7 @@ const InstructorDashboard: React.FC = () => {
             </Card>
           )}
 
-          {loading && (
-            <Card className="p-12 text-center">
-              <div className="text-gray-600">Loading dashboard...</div>
-            </Card>
-          )}
-
-          {!loading && dashboardData.length === 0 && (
+          {dashboardData.length === 0 && (
             <Card className="p-12 text-center">
               <div className="text-gray-600 mb-4">No courses yet</div>
               <Button

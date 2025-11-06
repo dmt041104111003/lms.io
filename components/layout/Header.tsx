@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const Header: React.FC = () => {
   const router = useRouter();
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -73,9 +73,7 @@ const Header: React.FC = () => {
 
           {/* Right side - User menu or Sign In buttons */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            {!loading && (
-              <>
-                {isAuthenticated && user ? (
+            {isAuthenticated && user ? (
                   /* User Menu - Desktop */
                   <div className="hidden md:flex items-center gap-3">
                     {user.role?.name === 'ADMIN' && (
@@ -141,8 +139,6 @@ const Header: React.FC = () => {
                     </Link>
                   </div>
                 )}
-              </>
-            )}
 
             {/* Mobile menu button */}
             <button
@@ -189,9 +185,8 @@ const Header: React.FC = () => {
                 Courses
               </Link>
 
-              {!loading && (
-                <div className="border-t border-gray-200 mt-2 pt-2">
-                  {isAuthenticated && user ? (
+              <div className="border-t border-gray-200 mt-2 pt-2">
+                {isAuthenticated && user ? (
                     <>
                       {user.role?.name === 'ADMIN' && (
                         <Link 
@@ -261,7 +256,6 @@ const Header: React.FC = () => {
                     </>
                   )}
                 </div>
-              )}
             </div>
           </nav>
         </div>

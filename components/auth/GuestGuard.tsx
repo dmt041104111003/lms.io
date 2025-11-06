@@ -9,7 +9,6 @@ interface GuestGuardProps {
 const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -19,21 +18,11 @@ const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
         router.push('/home');
       } catch (error) {
         setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
       }
     };
 
     checkAuth();
   }, [router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
 
   if (isAuthenticated) {
     return null; // Will redirect

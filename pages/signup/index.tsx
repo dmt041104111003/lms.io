@@ -11,7 +11,6 @@ import authService from '@/services/authService';
 
 const Signup: React.FC = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const { toasts, removeToast, success, error } = useToast();
 
   const handleSignup = async (data: {
@@ -21,8 +20,6 @@ const Signup: React.FC = () => {
     confirmPassword: string;
     agreeToTerms: boolean;
   }) => {
-    setLoading(true);
-
     try {
       const nameParts = data.fullName.trim().split(' ');
       const firstName = nameParts[0] || '';
@@ -67,8 +64,6 @@ const Signup: React.FC = () => {
       
       error(errorMessage);
       console.error('Signup error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 

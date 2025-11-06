@@ -11,7 +11,6 @@ import authService from '@/services/authService';
 
 const Login: React.FC = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const { toasts, removeToast, success, error } = useToast();
 
   useEffect(() => {
@@ -30,8 +29,6 @@ const Login: React.FC = () => {
   }, [router.isReady, router.query, router, error, success]);
 
   const handleLogin = async (data: { email: string; password: string; rememberMe: boolean }) => {
-    setLoading(true);
-    
     try {
       let username = data.email;
       if (data.email.toLowerCase().trim() !== 'admin' && data.email.includes('@')) {
@@ -55,8 +52,6 @@ const Login: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
       error(errorMessage);
       console.error('Login error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
