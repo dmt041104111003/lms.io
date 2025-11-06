@@ -5,12 +5,14 @@ import AuthLayout from '@/components/login/AuthLayout';
 import BrandingSection from '@/components/login/BrandingSection';
 import SignupForm from '@/components/signup/SignupForm';
 import GuestGuard from '@/components/auth/GuestGuard';
+import ToastContainer from '@/components/ui/ToastContainer';
+import { useToast } from '@/hooks/useToast';
 import authService from '@/services/authService';
 
 const Signup: React.FC = () => {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { toasts, removeToast, success, error } = useToast();
 
   const handleSignup = async (data: {
     fullName: string;
@@ -19,7 +21,6 @@ const Signup: React.FC = () => {
     confirmPassword: string;
     agreeToTerms: boolean;
   }) => {
-    setError(null);
     setLoading(true);
 
     try {
@@ -43,7 +44,10 @@ const Signup: React.FC = () => {
         email: data.email,
       });
 
-      router.push('/login?signup=success');
+      success('Account created successfully! Redirecting to login...');
+      setTimeout(() => {
+        router.push('/login?signup=success');
+      }, 1500);
     } catch (err) {
       let errorMessage = 'Signup failed. Please try again.';
       
@@ -61,7 +65,7 @@ const Signup: React.FC = () => {
         }
       }
       
-      setError(errorMessage);
+      error(errorMessage);
       console.error('Signup error:', err);
     } finally {
       setLoading(false);
@@ -74,16 +78,12 @@ const Signup: React.FC = () => {
         <div className="min-h-screen lg:h-screen flex flex-col lg:overflow-hidden">
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 lg:overflow-hidden">
             <AuthLayout>
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-600">
-                  {error}
-                </div>
-              )}
               <SignupForm onSubmit={handleSignup} />
             </AuthLayout>
             <BrandingSection />
           </div>
         </div>
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
       </Layout>
     </GuestGuard>
   );

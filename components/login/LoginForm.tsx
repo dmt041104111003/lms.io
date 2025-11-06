@@ -6,6 +6,7 @@ import FormInput from '@/components/ui/FormInput';
 import FormButton from '@/components/ui/FormButton';
 import SocialAuthButton from '@/components/ui/SocialAuthButton';
 import Divider from '@/components/ui/Divider';
+import CardanoWalletButton from '@/components/wallet/CardanoWalletButton';
 
 interface LoginFormProps {
   onSubmit: (data: { email: string; password: string; rememberMe: boolean }) => void;
@@ -97,6 +98,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
       <div className="mt-4 sm:mt-5 space-y-2">
         <SocialAuthButton provider="google" />
         <SocialAuthButton provider="github" />
+        <CardanoWalletButton />
       </div>
     </>
   );

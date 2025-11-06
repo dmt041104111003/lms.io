@@ -3,8 +3,6 @@ import Link from 'next/link';
 import { FiMail, FiLock, FiUser } from 'react-icons/fi';
 import FormInput from '@/components/ui/FormInput';
 import FormButton from '@/components/ui/FormButton';
-import SocialAuthButton from '@/components/ui/SocialAuthButton';
-import Divider from '@/components/ui/Divider';
 
 interface SignupFormProps {
   onSubmit: (data: {
@@ -160,8 +158,6 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSubmit }) => {
           </Link>
         </p>
       </div>
-
-      <Divider className="mt-4 sm:mt-5" />
 
 
     </>

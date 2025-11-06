@@ -6,21 +6,21 @@ const LoginSuccess: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const handleGoogleLoginSuccess = async () => {
+    const handleOAuthLoginSuccess = async () => {
       try {
         const user = await authService.getMyInfo();
         if (user) {
           router.push('/home');
         } else {
-          router.push('/login');
+          router.push('/login?error=oauth_failed');
         }
       } catch (err) {
-        console.error('Login success error:', err);
-        router.push('/login');
+        console.error('OAuth login error:', err);
+        router.push('/login?error=oauth_failed');
       }
     };
 
-    handleGoogleLoginSuccess();
+    handleOAuthLoginSuccess();
   }, [router]);
 
   return null;

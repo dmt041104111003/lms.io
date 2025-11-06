@@ -1,9 +1,13 @@
 import apiRequest from '@/lib/api';
 
 export interface LoginRequest {
-  username: string;
-  password: string;
+  username?: string;
+  password?: string;
   loginMethod: string;
+  address?: string;
+  signature?: string;
+  key?: string;
+  nonce?: string;
 }
 
 export interface LoginResponse {
@@ -87,6 +91,32 @@ export const authService = {
   async getMyInfo(): Promise<UserResponse> {
     return apiRequest<UserResponse>('/api/users/my-info', {
       method: 'GET',
+    });
+  },
+
+  async generateNonce(address: string): Promise<{ nonce: string }> {
+    return apiRequest<{ nonce: string }>('/api/nonce', {
+      method: 'POST',
+      body: JSON.stringify({ address }),
+    });
+  },
+
+  async loginWithWallet(walletData: {
+    address: string;
+    signature: string;
+    key: string;
+    nonce: string;
+  }): Promise<LoginResponse> {
+    const request: LoginRequest = {
+      loginMethod: 'WALLET',
+      address: walletData.address,
+      signature: walletData.signature,
+      key: walletData.key,
+      nonce: walletData.nonce,
+    };
+    return apiRequest<LoginResponse>('/api/auth/token', {
+      method: 'POST',
+      body: JSON.stringify(request),
     });
   },
 };
