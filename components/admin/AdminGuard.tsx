@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Loading from '@/components/layout/Loading';
 import authService from '@/services/authService';
 
 interface AdminGuardProps {
@@ -9,6 +10,7 @@ interface AdminGuardProps {
 const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -23,11 +25,17 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
       } catch (error) {
         setIsAdmin(false);
         router.push('/login');
+      } finally {
+        setLoading(false);
       }
     };
 
     checkAdmin();
   }, [router]);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (isAdmin === null || !isAdmin) {
     return null;

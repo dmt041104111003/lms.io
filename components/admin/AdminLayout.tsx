@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import AdminSidebar from './AdminSidebar';
+import Loading from '@/components/layout/Loading';
 import { useAuth } from '@/hooks/useAuth';
 import Logo from '@/components/ui/logo';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+  loading?: boolean;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children, loading = false }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,7 +21,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     : user?.username[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
+      {loading && <Loading />}
       {/* Header */}
       <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 h-16">
         <div className="flex items-center justify-between h-full px-4">

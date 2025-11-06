@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Loading from '@/components/layout/Loading';
 import authService from '@/services/authService';
 
 interface GuestGuardProps {
@@ -9,6 +10,7 @@ interface GuestGuardProps {
 const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -18,6 +20,8 @@ const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
         router.push('/home');
       } catch (error) {
         setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -28,7 +32,12 @@ const GuestGuard: React.FC<GuestGuardProps> = ({ children }) => {
     return null; // Will redirect
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {loading && <Loading />}
+      {children}
+    </>
+  );
 };
 
 export default GuestGuard;

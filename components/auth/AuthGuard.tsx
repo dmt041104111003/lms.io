@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import Loading from '@/components/layout/Loading';
 import authService from '@/services/authService';
 
 interface AuthGuardProps {
@@ -9,6 +10,7 @@ interface AuthGuardProps {
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -20,11 +22,17 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         if (router.pathname !== '/login') {
           router.push('/login');
         }
+      } finally {
+        setLoading(false);
       }
     };
 
     checkAuth();
   }, [router]);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (!isAuthenticated) {
     return null;
