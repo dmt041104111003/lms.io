@@ -6,22 +6,22 @@ const SearchSection: React.FC = () => {
   const slides = [
     {
       id: '1',
-      title: 'Welcome to the LMS Platform',
-      subtitle: 'Supercharge your learning with courses and instructors for online education',
+      title: 'Chào mừng tới với LMS - Cardano2vn.io',
+      subtitle: 'Học tập và phát triển bản thân với các khóa học và giảng viên trực tuyến',
       backgroundImage: '/images/common/01.png',
       gradientDirection: 'left' as const,
     },
     {
       id: '2',
-      title: 'Discover Top Courses',
-      subtitle: 'Explore our curated collection of the best courses from expert instructors',
+      title: 'Khám phá các khóa học hàng đầu',
+      subtitle: 'Khám phá các khóa học hàng đầu từ các giảng viên chuyên nghiệp',
       backgroundImage: '/images/common/02.png',
       gradientDirection: 'left' as const,
     },
     {
       id: '3',
-      title: 'Learn from Experts',
-      subtitle: 'Join thousands of students learning from industry professionals',
+      title: 'Học từ các chuyên gia',
+      subtitle: 'Tham gia hàng ngàn học viên học từ các chuyên gia công nghiệp',
       backgroundImage: '/images/common/03.png',
       gradientDirection: 'left' as const,
     },

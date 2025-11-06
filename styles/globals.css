@@ -22,9 +22,9 @@ html::-webkit-scrollbar {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: "Potta One", system-ui;
+  font-weight: 400;
+  font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -133,4 +133,5 @@ textarea {
 .loading-dot:nth-child(3) {
   animation-delay: 400ms;
 }
+
 
