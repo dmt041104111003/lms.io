@@ -44,7 +44,7 @@ export interface CourseCreationRequest {
   discount?: number;
   price?: number;
   currency?: string;
-  courseType: 'FREE' | 'PRO';
+  courseType: 'FREE' | 'PAID';
   discountEndTime?: string;
   policyId?: string;
   instructorId: number;

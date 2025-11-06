@@ -109,12 +109,12 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="FREE">Free</option>
-          <option value="PRO">Pro (Paid)</option>
+          <option value="PAID">Paid</option>
         </select>
       </div>
 
-      {/* Price (only for PRO) */}
-      {formData.courseType === 'PRO' && (
+      {/* Price (only for PAID) */}
+      {formData.courseType === 'PAID' && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Price <span className="text-red-500">*</span>
@@ -126,7 +126,7 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
             onChange={onChange}
             min="0"
             step="0.01"
-            required={formData.courseType === 'PRO'}
+            required={formData.courseType === 'PAID'}
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="0.00"
           />

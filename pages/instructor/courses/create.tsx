@@ -37,6 +37,7 @@ const CreateCourse: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'form' | 'json'>('form');
   const [tags, setTags] = useState<TagResponse[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchInstructorProfile = async () => {
@@ -128,6 +129,7 @@ const CreateCourse: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return; // prevent double submit
     
     if (!instructorProfileId) {
       error('Instructor profile not found');
@@ -145,6 +147,7 @@ const CreateCourse: React.FC = () => {
     }
 
     try {
+      setSubmitting(true);
       const courseData = {
         ...formData,
         tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
@@ -155,6 +158,8 @@ const CreateCourse: React.FC = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create course';
       error(errorMessage);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -228,14 +233,15 @@ const CreateCourse: React.FC = () => {
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={!instructorProfileId}
+                  disabled={!instructorProfileId || submitting}
                 >
-                  Create Course
+                  {submitting ? 'Creating…' : 'Create Course'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.back()}
+                  disabled={submitting}
                 >
                   Cancel
                 </Button>

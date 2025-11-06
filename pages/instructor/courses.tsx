@@ -90,7 +90,7 @@ const InstructorCourses: React.FC = () => {
                 >
                   <option value="">All Types</option>
                   <option value="FREE">Free</option>
-                  <option value="PRO">Pro</option>
+                  <option value="PAID">Paid</option>
                 </select>
               </div>
             </div>

@@ -34,7 +34,7 @@ const JsonImportTab: React.FC<JsonImportTabProps> = ({ onImport }) => {
         draft: parsed.draft !== undefined ? parsed.draft : true,
         price: parsed.price || 0,
         currency: parsed.currency || 'USD',
-        courseType: parsed.courseType || 'FREE',
+        courseType: parsed.courseType === 'PRO' ? 'PAID' : (parsed.courseType || 'FREE'),
         instructorId: parsed.instructorId || 0,
         chapters: parsed.chapters || [],
         courseTests: parsed.courseTests || [],
