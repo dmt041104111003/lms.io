@@ -68,6 +68,16 @@ const Header: React.FC = () => {
             >
               Courses
             </Link>
+            <Link 
+              href="/my-courses" 
+              className={`px-3 py-2 text-sm transition-colors border-b-2 ${
+                isActiveRoute('/my-courses')
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              My Courses
+            </Link>
             <a
               href="https://cardano2vn.io"
               target="_blank"
@@ -190,6 +200,17 @@ const Header: React.FC = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Courses
+              </Link>
+              <Link 
+                href="/my-courses" 
+                className={`px-3 py-2 text-sm transition-colors border-b-2 ${
+                  isActiveRoute('/my-courses')
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                My Courses
               </Link>
               <a
                 href="https://cardano2vn.io"

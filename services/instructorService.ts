@@ -159,6 +159,23 @@ export interface EnrollmentResponse {
   status: string;
 }
 
+export interface EnrollCourseRequest {
+  userId: string;
+  courseId: string;
+  coursePaymentMethodId?: number;
+  priceAda?: number;
+  txHash?: string;
+}
+
+export interface PaymentHistoryResponse {
+  id: string;
+  courseId?: string;
+  courseTitle?: string;
+  amount?: number;
+  createdAt?: string;
+  status?: string;
+}
+
 export interface TestDetailResponse {
   id: string;
   title: string;
@@ -353,6 +370,19 @@ export const instructorService = {
   // Enrollment Management
   async getEnrolledStudents(courseId: string): Promise<EnrollmentResponse[]> {
     return apiRequest<EnrollmentResponse[]>(`/api/enrollment/course/${courseId}/enrolled`, {
+      method: 'GET',
+    });
+  },
+
+  async enrollCourse(request: EnrollCourseRequest): Promise<EnrollmentResponse> {
+    return apiRequest<EnrollmentResponse>('/api/enrollment', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async getPaymentHistoryByUser(userId: string): Promise<PaymentHistoryResponse[]> {
+    return apiRequest<PaymentHistoryResponse[]>(`/api/enrollment/payment-history/user/${userId}`, {
       method: 'GET',
     });
   },

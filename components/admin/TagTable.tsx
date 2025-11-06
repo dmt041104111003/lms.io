@@ -54,14 +54,14 @@ const TagTable: React.FC<TagTableProps> = ({ tags, onRefresh }) => {
             </thead>
             <tbody className="bg-white">
               {tags.map((tag) => (
-                <tr key={tag.id} className="border-b border-gray-200">
-                  <td className="px-3 py-3 text-sm text-gray-900 text-center break-words">
+                <tr key={tag.id} className="hover:bg-gray-50 border-b border-gray-300">
+                  <td className="px-3 py-4 border-r border-gray-300 text-sm text-gray-900 text-center break-words">
                     {tag.name}
                   </td>
-                  <td className="px-3 py-3 text-sm text-gray-600 text-center break-words">
+                  <td className="px-3 py-4 border-r border-gray-300 text-sm text-gray-600 text-center break-words">
                     {tag.slug}
                   </td>
-                  <td className="px-3 py-2 text-sm text-gray-900">
+                  <td className="px-3 py-4 text-sm text-gray-900">
                     <div className="flex items-center justify-center gap-2">
                       <Button
                         variant="outline"
@@ -86,7 +86,7 @@ const TagTable: React.FC<TagTableProps> = ({ tags, onRefresh }) => {
         </div>
 
         {/* Mobile List */}
-        <div className="md:hidden divide-y divide-gray-200">
+        <div className="md:hidden divide-y divide-gray-300">
           {tags.map((tag) => (
             <div key={tag.id} className="p-4">
               <div className="flex justify-between items-center">
