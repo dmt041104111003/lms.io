@@ -26,6 +26,16 @@ const CourseDetailPage: React.FC = () => {
     const fetchCourse = async () => {
       try {
         const data = await instructorService.getCourseById(id);
+        const isDraftFlag =
+          (data as any).draft === true ||
+          (data as any).isDraft === true ||
+          (data as any).status === 'DRAFT' ||
+          (data as any).draft === 'true' ||
+          (data as any).isDraft === 'true';
+        if (isDraftFlag) {
+          setError('Course not found.');
+          return;
+        }
         setCourse(data);
         try {
           const recentRaw = localStorage.getItem('my_courses_recent');

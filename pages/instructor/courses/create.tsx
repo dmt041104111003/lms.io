@@ -24,7 +24,7 @@ const CreateCourse: React.FC = () => {
     shortDescription: '',
     requirement: '',
     videoUrl: '',
-    draft: true,
+    draft: false,
     price: 0,
     currency: 'USD',
     courseType: 'FREE',

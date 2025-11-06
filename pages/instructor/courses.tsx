@@ -26,7 +26,15 @@ const InstructorCourses: React.FC = () => {
         page,
         size,
       });
-      setCourses(data);
+      const sorted = {
+        ...data,
+        content: [...data.content].sort((a, b) => {
+          const da = a.createdAt || '';
+          const db = b.createdAt || '';
+          return db.localeCompare(da);
+        })
+      };
+      setCourses(sorted);
     } catch (error) {
       console.error('Failed to fetch courses:', error);
     }

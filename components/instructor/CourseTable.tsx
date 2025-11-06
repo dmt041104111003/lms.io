@@ -79,7 +79,7 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
                   Course
                 </th>
                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 border-b-2 border-r border-gray-300">
-                  Description
+                  Status
                 </th>
                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6 border-b-2 border-r border-gray-300">
                   Type
@@ -95,7 +95,6 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
             <tbody className="bg-white">
               {courses.map((course) => {
                 const displayTitle = truncateText(course.title, 20);
-                const displayDescription = truncateText(course.description, 30);
 
                 return (
                   <tr key={course.id} className="hover:bg-gray-50 border-b border-gray-300">
@@ -122,11 +121,16 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
                       </div>
                     </td>
                     <td className="px-3 py-4 border-r border-gray-300">
-                      <Tooltip content={course.description || ''}>
-                        <div className="text-sm text-gray-900 truncate">
-                          {displayDescription || 'N/A'}
-                        </div>
-                      </Tooltip>
+                      <span
+                        className={`inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full border ${
+                          course.draft
+                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                            : 'bg-green-50 text-green-700 border-green-200'
+                        }`}
+                      >
+                        <span className={`h-2 w-2 rounded-full ${course.draft ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                        {course.draft ? 'Draft' : 'Published'}
+                      </span>
                     </td>
                     <td className="px-3 py-4 border-r border-gray-300">
                       <span className="text-sm text-gray-700">
@@ -175,7 +179,6 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
         <div className="md:hidden divide-y divide-gray-200">
           {courses.map((course) => {
             const displayTitle = truncateText(course.title, 20);
-            const displayDescription = truncateText(course.description, 30);
 
             return (
               <div key={course.id} className="p-4 hover:bg-gray-50">
@@ -198,11 +201,18 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
                           {displayTitle}
                         </div>
                       </Tooltip>
-                      <Tooltip content={course.description || ''}>
-                        <div className="text-xs text-gray-600 truncate mt-1">
-                          {displayDescription || 'N/A'}
-                        </div>
-                      </Tooltip>
+                      <div className="mt-1">
+                        <span
+                          className={`inline-flex items-center gap-2 text-[10px] px-2 py-0.5 rounded-full border ${
+                            course.draft
+                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                              : 'bg-green-50 text-green-700 border-green-200'
+                          }`}
+                        >
+                          <span className={`h-1.5 w-1.5 rounded-full ${course.draft ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                          {course.draft ? 'Draft' : 'Published'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 items-end flex-shrink-0">
