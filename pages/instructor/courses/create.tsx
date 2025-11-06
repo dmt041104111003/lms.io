@@ -139,6 +139,11 @@ const CreateCourse: React.FC = () => {
       return;
     }
 
+    if (!imageFile) {
+      error('Please select a thumbnail image for the course');
+      return;
+    }
+
     try {
       const courseData = {
         ...formData,

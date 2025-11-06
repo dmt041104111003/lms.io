@@ -30,6 +30,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onMenuClick }) => {
   const menuItems = [
     { path: '/admin', label: 'Dashboard' },
     { path: '/admin/users', label: 'Users' },
+    { path: '/admin/tags', label: 'Tags' },
   ];
 
   return (

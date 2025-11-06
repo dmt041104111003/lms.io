@@ -69,7 +69,7 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
 
   return (
     <>
-      <Card className="overflow-hidden">
+      <Card className="overflow-visible">
         {/* Desktop Table */}
         <div className="hidden md:block">
           <table className="w-full table-fixed border-collapse">

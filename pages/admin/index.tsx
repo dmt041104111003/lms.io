@@ -32,6 +32,12 @@ const AdminDashboard: React.FC = () => {
               >
                 <span className="text-sm font-medium text-gray-900">Manage Users</span>
               </Card>
+              <Card
+                onClick={() => window.location.href = '/admin/tags'}
+                className="p-4"
+              >
+                <span className="text-sm font-medium text-gray-900">Manage Tags</span>
+              </Card>
             </div>
           </Card>
         </div>

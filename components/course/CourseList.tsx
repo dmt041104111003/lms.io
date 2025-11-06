@@ -19,7 +19,6 @@ const CourseList: React.FC<CourseListProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
-  // Filter courses based on active tab
   const filteredCourses = courses.filter((course) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'free') {

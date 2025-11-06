@@ -29,6 +29,17 @@ export interface RoleResponse {
   name: string;
 }
 
+export interface TagResponse {
+  id: number;
+  name: string;
+  slug: string;
+  createdAt?: string;
+}
+
+export interface TagCreateRequest {
+  name: string;
+}
+
 export interface UserSearchParams {
   keyword?: string;
   role?: string;
@@ -91,6 +102,26 @@ export const adminService = {
   async getRoles(): Promise<RoleResponse[]> {
     return apiRequest<RoleResponse[]>('/api/roles', {
       method: 'GET',
+    });
+  },
+
+  async getTags(): Promise<TagResponse[]> {
+    return apiRequest<TagResponse[]>('/api/tags', {
+      method: 'GET',
+    });
+  },
+
+  async createTag(name: string): Promise<TagResponse> {
+    const request: TagCreateRequest = { name };
+    return apiRequest<TagResponse>('/api/tags', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  async deleteTag(id: number): Promise<void> {
+    return apiRequest<void>(`/api/tags/${id}`, {
+      method: 'DELETE',
     });
   },
 };
