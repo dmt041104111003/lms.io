@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import PlayStoreCard from './PlayStoreCard';
+import CourseSlider from './CourseSlider';
 import { Course } from './types';
 
 interface FanCardsProps {
@@ -10,10 +11,27 @@ const FanCards: React.FC<FanCardsProps> = ({ courses }) => {
   const fanCardsRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // sm breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const displayCourses = courses.slice(0, 4);
 
   if (displayCourses.length === 0) return null;
+
+  // Trên mobile dùng CourseSlider
+  if (isMobile) {
+    return <CourseSlider title="" courses={displayCourses} />;
+  }
 
   const scrollBy = (amount: number) => {
     if (fanCardsRef.current) {
@@ -43,7 +61,7 @@ const FanCards: React.FC<FanCardsProps> = ({ courses }) => {
   };
 
   return (
-    <div className="relative">
+    <>
       <button
         onClick={() => scrollBy(-400)}
         className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 w-10 h-10 md:w-12 md:h-12 bg-white rounded-full border border-gray-300 shadow-md items-center justify-center hover:bg-gray-50 transition-all"
@@ -107,19 +125,24 @@ const FanCards: React.FC<FanCardsProps> = ({ courses }) => {
           const total = displayCourses.length;
           const centerIndex = (total - 1) / 2;
           const offset = index - centerIndex;
-          const rotation = offset * 5;
-          const translateX = offset * 12;
+          // Card ngoài cùng (index 0 hoặc total-1) xoay ngược hướng
+          const isOuterCard = index === 0 || index === total - 1;
+          const baseRotation = offset * 12;
+          const rotation = isOuterCard ? -baseRotation : baseRotation;
+          const translateX = offset * 25;
           const zIndex = total - Math.abs(offset);
-          const marginLeft = index === 0 ? 0 : -45;
+          // Tăng marginLeft âm để các card chồng lên nhau nhiều hơn nữa
+          const marginLeft = index === 0 ? 0 : -180;
 
           return (
             <div
               key={course.id}
-              className="transition-all duration-300 hover:scale-110 hover:z-50"
+              className="transition-all duration-300 hover:scale-110 hover:z-50 relative"
               style={{
                 transform: `rotate(${rotation}deg) translateX(${translateX}px)`,
                 zIndex: zIndex,
                 marginLeft: `${marginLeft}px`,
+                position: 'relative',
               }}
             >
               <div className="scale-75 md:scale-100">
@@ -166,7 +189,7 @@ const FanCards: React.FC<FanCardsProps> = ({ courses }) => {
           <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
         </svg>
       </button>
-    </div>
+    </>
   );
 };
 

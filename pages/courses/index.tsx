@@ -23,22 +23,42 @@ const CoursesPage: React.FC = () => {
           page: 0, 
           size: 50 
         });
-        const mapped: Course[] = res.content
-          .slice()
-          .sort((a, b) => {
-            const da = a.createdAt || '';
-            const db = b.createdAt || '';
-            return db.localeCompare(da);
+        
+        const filtered = res.content.filter((c) => !(c as any).draft && !(c as any).isDraft && (c as any).status !== 'DRAFT');
+        
+        const coursesWithCreatedAt = await Promise.all(
+          filtered.map(async (c) => {
+            try {
+              const detail = await instructorService.getCourseById(c.id);
+              return {
+                id: c.id,
+                title: c.title,
+                instructor: '',
+                description: c.description,
+                price: c.courseType === 'FREE' || c.price === 0 ? 'Free' : (c.price != null ? `$${c.price}` : undefined),
+                image: c.imageUrl,
+                createdAt: detail.createdAt || (detail as any).createdAt, 
+              } as Course & { createdAt?: string };
+            } catch (err) {
+              return {
+                id: c.id,
+                title: c.title,
+                instructor: '',
+                description: c.description,
+                price: c.courseType === 'FREE' || c.price === 0 ? 'Free' : (c.price != null ? `$${c.price}` : undefined),
+                image: c.imageUrl,
+                createdAt: undefined,
+              } as Course & { createdAt?: string };
+            }
           })
-          .filter((c) => !(c as any).draft && !(c as any).isDraft && (c as any).status !== 'DRAFT')
-          .map((c) => ({
-          id: c.id,
-          title: c.title,
-          instructor: '',
-          description: c.description,
-          price: c.courseType === 'FREE' || c.price === 0 ? 'Free' : (c.price != null ? `$${c.price}` : undefined),
-          image: c.imageUrl,
-        }));
+        );
+        
+        const mapped = coursesWithCreatedAt.sort((a, b) => {
+          const da = a.createdAt || '';
+          const db = b.createdAt || '';
+          return db.localeCompare(da);
+        });
+        
         setCourses(mapped);
         setTotalResults(res.totalElements);
       } catch (e) {

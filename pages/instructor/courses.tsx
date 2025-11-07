@@ -173,7 +173,6 @@ const InstructorCourses: React.FC = () => {
                       totalPages: newTotalPages
                     });
 
-                    // Nếu trang hiện tại trống và không phải trang đầu, quay về trang trước
                     if (newContent.length === 0 && page > 0) {
                       setPage(page - 1);
                     }

@@ -6,6 +6,7 @@ import instructorService, { CourseResponse } from '@/services/instructorService'
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import ToastContainer from '@/components/ui/ToastContainer';
+import { FiTag } from 'react-icons/fi';
 
 const CourseDetailPage: React.FC = () => {
   const router = useRouter();
@@ -146,6 +147,19 @@ const CourseDetailPage: React.FC = () => {
                     <p className="text-gray-700 whitespace-pre-line">{course.description}</p>
                   </div>
                 )}
+                {(course as any).courseTags || (course as any).tags ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((course as any).courseTags || (course as any).tags || []).map((tag: any) => (
+                      <span
+                        key={tag.id || tag.tagId}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all"
+                      >
+                        <FiTag size={12} className="text-gray-600" />
+                        {tag.name || tag.tagName}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               {/* Sidebar */}

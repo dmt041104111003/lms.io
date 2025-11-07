@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import PlayStoreCard from './PlayStoreCard';
 import { Course } from './types';
 
@@ -9,9 +9,93 @@ interface CourseSliderProps {
 
 const CourseSlider: React.FC<CourseSliderProps> = ({ title, courses }) => {
   const sliderRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const duplicatedCourses = courses.length > 0 ? [...courses, ...courses, ...courses] : [];
+
+  useEffect(() => {
+    const slider = sliderRef.current;
+    if (!slider || courses.length === 0) return;
+
+    const initScroll = () => {
+      const firstItem = slider.querySelector('.slider-item') as HTMLElement;
+      if (!firstItem) {
+        setTimeout(initScroll, 50);
+        return;
+      }
+      const cardWidth = firstItem.offsetWidth;
+      const gap = 20; 
+      const itemWidth = cardWidth + gap;
+      const scrollPosition = itemWidth * courses.length;
+      slider.scrollLeft = scrollPosition;
+    };
+    
+    setTimeout(initScroll, 100);
+
+    const handleScroll = () => {
+      if (isScrolling) return;
+      
+      const firstItem = slider.querySelector('.slider-item') as HTMLElement;
+      if (!firstItem) return;
+      
+      const cardWidth = firstItem.offsetWidth;
+      const gap = 20;
+      const itemWidth = cardWidth + gap;
+      const sectionWidth = itemWidth * courses.length;
+      const { scrollLeft } = slider;
+
+      if (scrollLeft >= sectionWidth * 2 - 50) {
+        setIsScrolling(true);
+        slider.style.scrollBehavior = 'auto';
+        slider.scrollLeft = sectionWidth;
+        setTimeout(() => {
+          slider.style.scrollBehavior = 'smooth';
+          setIsScrolling(false);
+        }, 50);
+      }
+      else if (scrollLeft <= sectionWidth - 50) {
+        setIsScrolling(true);
+        slider.style.scrollBehavior = 'auto';
+        slider.scrollLeft = sectionWidth;
+        setTimeout(() => {
+          slider.style.scrollBehavior = 'smooth';
+          setIsScrolling(false);
+        }, 50);
+      }
+    };
+
+    slider.addEventListener('scroll', handleScroll);
+    
+    // Auto scroll every 3 seconds (only when not paused)
+    const startAutoScroll = () => {
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current);
+      }
+      autoScrollIntervalRef.current = setInterval(() => {
+        if (!isScrolling && !isPaused && slider) {
+          const scrollAmount = 400;
+          slider.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth',
+          });
+        }
+      }, 3000);
+    };
+    
+    startAutoScroll();
+    
+    return () => {
+      slider.removeEventListener('scroll', handleScroll);
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current);
+      }
+    };
+  }, [courses.length, isScrolling, isPaused]);
 
   const scrollSlider = (direction: 'left' | 'right') => {
-    if (sliderRef.current) {
+    if (sliderRef.current && !isScrolling) {
       const scrollAmount = 400;
       sliderRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
@@ -38,9 +122,17 @@ const CourseSlider: React.FC<CourseSliderProps> = ({ title, courses }) => {
         ref={sliderRef}
         className="flex gap-5 overflow-x-auto scroll-smooth scrollbar-hide group"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onTouchStart={() => setIsPaused(true)}
+        onTouchEnd={() => {
+          setTimeout(() => setIsPaused(false), 2000);
+        }}
       >
-        {courses.map((course) => (
-          <PlayStoreCard key={course.id} course={course} />
+        {duplicatedCourses.map((course, index) => (
+          <div key={`${course.id}-${index}`} className="slider-item flex-shrink-0">
+            <PlayStoreCard course={course} />
+          </div>
         ))}
       </div>
       <button

@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Course } from './types';
+import { formatTimeAgo } from '@/utils/dateUtils';
 
 interface RankingsListProps {
   courses: Course[];
@@ -50,6 +51,14 @@ const RankingsList: React.FC<RankingsListProps> = ({ courses }) => {
                           <span className="text-gray-500">({course.reviews.toLocaleString()})</span>
                         )}
                       </div>
+                    )}
+                    {(course as any).createdAt && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        <div className="text-sm text-gray-500">
+                          {formatTimeAgo((course as any).createdAt)}
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>

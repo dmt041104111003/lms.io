@@ -102,7 +102,6 @@ const CreateCourse: React.FC = () => {
   };
 
   const handleThumbnailSelect = (thumbnailUrl: string) => {
-    // Convert thumbnail URL to blob and set as image file
     fetch(thumbnailUrl)
       .then(res => res.blob())
       .then(blob => {

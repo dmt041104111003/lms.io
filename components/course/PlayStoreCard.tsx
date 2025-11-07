@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Course } from './types';
+import { formatTimeAgo } from '@/utils/dateUtils';
 
 interface PlayStoreCardProps {
   course: Course;
@@ -37,15 +38,25 @@ const PlayStoreCard: React.FC<PlayStoreCardProps> = ({ course }) => {
             </div>
           )}
 
-          {/* Rating */}
-          {course.rating && (
-            <div className="text-sm text-gray-600">
-              {course.rating.toFixed(1)} ⭐
-              {course.reviews && (
-                <span className="ml-1">({course.reviews.toLocaleString()})</span>
-              )}
-            </div>
-          )}
+          {/* Rating and Created At */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {course.rating && (
+              <div className="text-sm text-gray-600">
+                {course.rating.toFixed(1)} ⭐
+                {course.reviews && (
+                  <span className="ml-1">({course.reviews.toLocaleString()})</span>
+                )}
+              </div>
+            )}
+            {(course as any).createdAt && (
+              <>
+                {course.rating && <span className="text-gray-400">•</span>}
+                <div className="text-sm text-gray-500">
+                  {formatTimeAgo((course as any).createdAt)}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </Link>
