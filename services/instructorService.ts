@@ -137,12 +137,31 @@ export interface CourseCreationResponse {
   updatedAt?: string;
 }
 
+export interface EnrollmentDashboardResponse {
+  id: string | number;
+  enrolledAt?: string;
+  completed?: boolean;
+  price?: number;
+  user?: {
+    id: string;
+    name: string;
+  };
+  progress?: any[];
+}
+
 export interface CourseDashboardResponse {
-  courseId: string;
-  courseTitle: string;
-  totalStudents: number;
-  revenue: number;
-  totalEnrollments: number;
+  id: string;
+  title: string;
+  createdAt?: string;
+  totalLectures?: number;
+  totalTests?: number;
+  enrollments?: EnrollmentDashboardResponse[];
+  // Computed fields
+  courseId?: string;
+  courseTitle?: string;
+  totalStudents?: number;
+  revenue?: number;
+  totalEnrollments?: number;
 }
 
 export interface CourseShortResponse {
@@ -284,8 +303,11 @@ export const instructorService = {
     });
   },
 
-  async getCourseById(courseId: string): Promise<CourseResponse> {
-    return apiRequest<CourseResponse>(`/api/course/${courseId}`, {
+  async getCourseById(courseId: string, instructorId?: number): Promise<CourseResponse> {
+    const url = instructorId 
+      ? `/api/course/${courseId}?instructorId=${instructorId}`
+      : `/api/course/${courseId}`;
+    return apiRequest<CourseResponse>(url, {
       method: 'GET',
     });
   },

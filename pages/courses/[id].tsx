@@ -2,11 +2,50 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/layout/Layout';
 import SEO from '@/components/ui/SEO';
+import Card from '@/components/ui/Card';
 import instructorService, { CourseResponse } from '@/services/instructorService';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import ToastContainer from '@/components/ui/ToastContainer';
 import { FiTag } from 'react-icons/fi';
+
+interface ChapterSummary {
+  id: number;
+  title: string;
+  orderIndex: number;
+  lectures?: LectureSummary[];
+  tests?: TestSummary[];
+}
+
+interface LectureSummary {
+  id: number;
+  title: string;
+  description?: string;
+  videoUrl?: string;
+  duration?: number;
+  orderIndex: number;
+  previewFree?: boolean;
+}
+
+interface TestSummary {
+  id: number;
+  title: string;
+  durationMinutes?: number;
+  passScore?: number;
+  orderIndex: number;
+}
+
+interface CourseDetail {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  price?: number;
+  courseType?: string;
+  chapters?: ChapterSummary[];
+  courseTests?: TestSummary[];
+}
 
 const CourseDetailPage: React.FC = () => {
   const router = useRouter();
@@ -16,7 +55,7 @@ const CourseDetailPage: React.FC = () => {
   const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
 
-  const [course, setCourse] = useState<CourseResponse | null>(null);
+  const [course, setCourse] = useState<CourseDetail | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   
   const [error, setError] = useState<string | null>(null);
@@ -26,23 +65,72 @@ const CourseDetailPage: React.FC = () => {
 
     const fetchCourse = async () => {
       try {
-        const data = await instructorService.getCourseById(id);
-        const isDraftFlag =
-          (data as any).draft === true ||
-          (data as any).isDraft === true ||
-          (data as any).status === 'DRAFT' ||
-          (data as any).draft === 'true' ||
-          (data as any).isDraft === 'true';
-        if (isDraftFlag) {
-          setError('Course not found.');
-          return;
+        const detailUrl = `/api/course/${id}${user?.id ? `?userId=${user.id}` : ''}`;
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://lms-backend-0-0-1.onrender.com'}${detailUrl}`, {
+          credentials: 'include',
+        });
+        const apiResponse = await response.json();
+        
+        if (apiResponse.code === 1000 && apiResponse.result) {
+          const result = apiResponse.result;
+          const isDraftFlag =
+            result.draft === true ||
+            result.isDraft === true ||
+            result.status === 'DRAFT' ||
+            result.draft === 'true' ||
+            result.isDraft === 'true';
+          if (isDraftFlag) {
+            setError('Course not found.');
+            return;
+          }
+          
+          setCourse({
+            id: result.id,
+            title: result.title || '',
+            description: result.description,
+            imageUrl: result.imageUrl,
+            videoUrl: result.videoUrl,
+            price: result.price,
+            courseType: result.courseType,
+            chapters: result.chapters || [],
+            courseTests: result.courseTests || [],
+          });
+          
+          try {
+            const recentRaw = localStorage.getItem('my_courses_recent');
+            const recent: Array<{ id: string }> = recentRaw ? JSON.parse(recentRaw) : [];
+            setIsEnrolled(recent.some(c => c.id === String(result.id)));
+          } catch {}
+        } else {
+          // Fallback to basic course info
+          const data = await instructorService.getCourseById(id);
+          const isDraftFlag =
+            (data as any).draft === true ||
+            (data as any).isDraft === true ||
+            (data as any).status === 'DRAFT' ||
+            (data as any).draft === 'true' ||
+            (data as any).isDraft === 'true';
+          if (isDraftFlag) {
+            setError('Course not found.');
+            return;
+          }
+          setCourse({
+            id: data.id,
+            title: data.title || '',
+            description: data.description,
+            imageUrl: data.imageUrl,
+            videoUrl: (data as any).videoUrl,
+            price: data.price,
+            courseType: data.courseType,
+            chapters: [],
+            courseTests: [],
+          });
+          try {
+            const recentRaw = localStorage.getItem('my_courses_recent');
+            const recent: Array<{ id: string }> = recentRaw ? JSON.parse(recentRaw) : [];
+            setIsEnrolled(recent.some(c => c.id === String(data.id)));
+          } catch {}
         }
-        setCourse(data);
-        try {
-          const recentRaw = localStorage.getItem('my_courses_recent');
-          const recent: Array<{ id: string }> = recentRaw ? JSON.parse(recentRaw) : [];
-          setIsEnrolled(recent.some(c => c.id === String(data.id)));
-        } catch {}
       } catch (err) {
         console.error('Failed to fetch course detail:', err);
         setError('Failed to load course. Please try again later.');
@@ -50,7 +138,7 @@ const CourseDetailPage: React.FC = () => {
     };
 
     fetchCourse();
-  }, [id]);
+  }, [id, user]);
 
   if (error) {
     return (
@@ -160,6 +248,105 @@ const CourseDetailPage: React.FC = () => {
                     ))}
                   </div>
                 ) : null}
+
+                {/* Chapters */}
+                {course.chapters && course.chapters.length > 0 && (
+                  <Card className="p-6 mt-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Content</h2>
+                    <div className="space-y-4">
+                      {course.chapters
+                        .sort((a, b) => a.orderIndex - b.orderIndex)
+                        .map((chapter) => (
+                          <div key={chapter.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-lg font-medium text-gray-900">
+                                Chapter {chapter.orderIndex + 1}: {chapter.title}
+                              </h3>
+                            </div>
+
+                            {/* Lectures */}
+                            {chapter.lectures && chapter.lectures.length > 0 && (
+                              <div className="mb-3">
+                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Lectures:</h4>
+                                <div className="space-y-2 ml-4">
+                                  {chapter.lectures
+                                    .sort((a, b) => a.orderIndex - b.orderIndex)
+                                    .map((lecture) => (
+                                      <div key={lecture.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                        <div className="flex-1">
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {lecture.orderIndex + 1}. {lecture.title}
+                                          </div>
+                                          {lecture.description && (
+                                            <div className="text-xs text-gray-600 mt-1">{lecture.description}</div>
+                                          )}
+                                          {lecture.duration && (
+                                            <div className="text-xs text-gray-500 mt-1">Duration: {lecture.duration} min</div>
+                                          )}
+                                        </div>
+                                        {lecture.previewFree && (
+                                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Free Preview</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Tests */}
+                            {chapter.tests && chapter.tests.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Tests:</h4>
+                                <div className="space-y-2 ml-4">
+                                  {chapter.tests
+                                    .sort((a, b) => a.orderIndex - b.orderIndex)
+                                    .map((test) => (
+                                      <div key={test.id} className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                                        <div className="flex-1">
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {test.orderIndex + 1}. {test.title}
+                                          </div>
+                                          {test.durationMinutes && (
+                                            <div className="text-xs text-gray-600 mt-1">Duration: {test.durationMinutes} minutes</div>
+                                          )}
+                                          {test.passScore && (
+                                            <div className="text-xs text-gray-600 mt-1">Pass Score: {test.passScore}%</div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Course Tests (tests not in chapters) */}
+                {course.courseTests && course.courseTests.length > 0 && (
+                  <Card className="p-6 mt-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Tests</h2>
+                    <div className="space-y-2">
+                      {course.courseTests
+                        .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+                        .map((test) => (
+                          <div key={test.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">{test.title}</div>
+                              {test.durationMinutes && (
+                                <div className="text-xs text-gray-600 mt-1">Duration: {test.durationMinutes} minutes</div>
+                              )}
+                              {test.passScore && (
+                                <div className="text-xs text-gray-600 mt-1">Pass Score: {test.passScore}%</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </Card>
+                )}
               </div>
 
               {/* Sidebar */}

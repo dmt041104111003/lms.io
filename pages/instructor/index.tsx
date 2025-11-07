@@ -28,7 +28,32 @@ const InstructorDashboard: React.FC = () => {
         if (profile?.id) {
           const data = await instructorService.getEducatorDashboard(profile.id);
           console.log('Dashboard data:', data);
-          setDashboardData(data || []);
+          console.log('First course enrollments:', data?.[0]?.enrollments);
+          
+          const mappedData = (data || []).map((course) => {
+            const enrollments = (course as any).enrollments || course.enrollments || [];
+            console.log(`Course ${course.id} - Raw course:`, course);
+            console.log(`Course ${course.id} enrollments:`, enrollments);
+            console.log(`Course ${course.id} enrollments type:`, typeof enrollments, Array.isArray(enrollments));
+            
+            const uniqueUsers = new Set(enrollments.map((e: any) => e?.user?.id || e?.user?.Id).filter(Boolean));
+            const totalRevenue = enrollments.reduce((sum: number, e: any) => {
+              const price = e?.price || 0;
+              return sum + (price > 0 ? price : 0);
+            }, 0);
+            
+            return {
+              ...course,
+              courseId: course.id,
+              courseTitle: course.title,
+              totalStudents: uniqueUsers.size,
+              revenue: totalRevenue,
+              totalEnrollments: enrollments.length,
+            };
+          });
+          
+          console.log('Mapped data:', mappedData);
+          setDashboardData(mappedData);
         } else {
           console.warn('No instructor profile found for user:', user.id);
           showError('No instructor profile found');
@@ -184,7 +209,7 @@ const InstructorDashboard: React.FC = () => {
                     </div>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <div className="text-sm text-gray-600">Course ID</div>
-                      <div className="text-sm font-semibold text-gray-900 mt-1 break-all">{selectedCourse.courseId}</div>
+                      <div className="text-sm font-semibold text-gray-900 mt-1 break-all">{selectedCourse.courseId || 'N/A'}</div>
                     </div>
                   </div>
                 </div>
@@ -200,6 +225,10 @@ const InstructorDashboard: React.FC = () => {
                   <Button
                     variant="primary"
                     onClick={() => {
+                      if (!selectedCourse.courseId) {
+                        showError('Course ID is missing');
+                        return;
+                      }
                       setSelectedCourse(null);
                       router.push(`/instructor/courses/${selectedCourse.courseId}`);
                     }}
