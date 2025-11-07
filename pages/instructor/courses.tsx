@@ -8,41 +8,80 @@ import instructorService, { CourseResponse, PageResponse } from '@/services/inst
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAuth } from '@/hooks/useAuth';
 
 const InstructorCourses: React.FC = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [courses, setCourses] = useState<PageResponse<CourseResponse> | null>(null);
+  const [instructorProfileId, setInstructorProfileId] = useState<number | null>(null);
   const [keyword, setKeyword] = useState('');
   const debouncedKeyword = useDebounce(keyword, 500);
   const [selectedType, setSelectedType] = useState('');
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
+  // Fetch instructor profile ID
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      try {
+        const profile = await instructorService.getInstructorProfileByUserId(user.id);
+        if (profile?.id) {
+          setInstructorProfileId(profile.id);
+        }
+      } catch (error) {
+        console.error('Failed to fetch instructor profile:', error);
+      }
+    };
+    fetchProfile();
+  }, [user]);
+
   const fetchCourses = async () => {
+    if (!instructorProfileId) return;
     try {
-      const data = await instructorService.searchCourses({
-        keyword: debouncedKeyword || undefined,
-        courseType: selectedType || undefined,
-        page,
-        size,
+      const data = await instructorService.getCoursesByProfile(instructorProfileId, 0, 1000);
+      
+      let filtered = data.content;
+      if (debouncedKeyword) {
+        filtered = filtered.filter(c => 
+          c.title?.toLowerCase().includes(debouncedKeyword.toLowerCase()) ||
+          c.description?.toLowerCase().includes(debouncedKeyword.toLowerCase())
+        );
+      }
+      if (selectedType) {
+        filtered = filtered.filter(c => c.courseType === selectedType);
+      }
+      
+      const sorted = filtered.sort((a, b) => {
+        const da = a.createdAt || '';
+        const db = b.createdAt || '';
+        return db.localeCompare(da);
       });
-      const sorted = {
-        ...data,
-        content: [...data.content].sort((a, b) => {
-          const da = a.createdAt || '';
-          const db = b.createdAt || '';
-          return db.localeCompare(da);
-        })
-      };
-      setCourses(sorted);
+      
+      const totalElements = sorted.length;
+      const totalPages = Math.ceil(totalElements / size);
+      const startIndex = page * size;
+      const endIndex = startIndex + size;
+      const paginatedContent = sorted.slice(startIndex, endIndex);
+      
+      setCourses({
+        content: paginatedContent,
+        totalElements,
+        totalPages,
+        size,
+        number: page,
+      });
     } catch (error) {
       console.error('Failed to fetch courses:', error);
     }
   };
 
   useEffect(() => {
-    fetchCourses();
-  }, [debouncedKeyword, selectedType, page, size]);
+    if (instructorProfileId) {
+      fetchCourses();
+    }
+  }, [instructorProfileId, debouncedKeyword, selectedType, page, size]);
 
   useEffect(() => {
     setPage(0);
@@ -110,6 +149,17 @@ const InstructorCourses: React.FC = () => {
               <CourseTable 
                 courses={courses.content} 
                 onRefresh={fetchCourses}
+                onCourseUpdate={(courseId, updates) => {
+                  if (courses) {
+                    const newContent = courses.content.map(c => 
+                      c.id === courseId ? { ...c, ...updates } : c
+                    );
+                    setCourses({
+                      ...courses,
+                      content: newContent
+                    });
+                  }
+                }}
                 onCourseDelete={(courseId) => {
                   if (courses) {
                     const newContent = courses.content.filter(c => c.id !== courseId);

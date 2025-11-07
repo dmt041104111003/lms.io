@@ -19,9 +19,10 @@ interface CourseTableProps {
   onRefresh: () => void;
   onEdit?: (course: CourseResponse) => void;
   onCourseDelete?: (courseId: string) => void;
+  onCourseUpdate?: (courseId: string, updates: Partial<CourseResponse>) => void;
 }
 
-const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, onCourseDelete }) => {
+const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, onCourseDelete, onCourseUpdate }) => {
   const { dialog, showDialog, closeDialog } = useDialog();
   const { toasts, removeToast, success, error } = useToast();
 
@@ -47,14 +48,17 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
     );
   };
 
-  const handlePublish = (courseId: string) => {
+  const handlePublish = (course: CourseResponse) => {
     showDialog(
       'Publish Course',
       'Are you sure you want to publish this course? It will be visible to all users.',
       async () => {
         try {
-          await instructorService.publishCourse(courseId);
+          await instructorService.publishCourse(course.id);
           success('Course published successfully');
+          if (onCourseUpdate) {
+            onCourseUpdate(course.id, { draft: false });
+          }
           if (onRefresh) {
             onRefresh();
           }
@@ -64,6 +68,44 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
         }
       },
       { confirmText: 'Publish' }
+    );
+  };
+
+  const handleUnpublish = (course: CourseResponse) => {
+    showDialog(
+      'Unpublish Course',
+      'Are you sure you want to unpublish this course? It will no longer be visible to users.',
+      async () => {
+        try {
+          const fullCourse = await instructorService.getCourseById(course.id);
+          const courseData = fullCourse as any;
+          
+          await instructorService.updateCourse(course.id, {
+            title: fullCourse.title || course.title,
+            description: fullCourse.description,
+            shortDescription: courseData.shortDescription,
+            requirement: courseData.requirement,
+            videoUrl: courseData.videoUrl,
+            draft: true,
+            price: fullCourse.price,
+            currency: courseData.currency,
+            discount: courseData.discount,
+            discountEndTime: courseData.discountEndTime,
+            courseType: fullCourse.courseType,
+          } as any);
+          success('Course unpublished successfully');
+          if (onCourseUpdate) {
+            onCourseUpdate(course.id, { draft: true });
+          }
+          if (onRefresh) {
+            onRefresh();
+          }
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to unpublish course';
+          error(errorMessage);
+        }
+      },
+      { confirmText: 'Unpublish' }
     );
   };
 
@@ -153,7 +195,7 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
                           {
                             label: course.draft ? 'Publish' : 'Unpublish',
                             value: 'publish',
-                            onClick: () => handlePublish(course.id),
+                            onClick: () => course.draft ? handlePublish(course) : handleUnpublish(course),
                             className: course.draft ? 'text-green-600' : 'text-orange-600',
                           },
                           {
@@ -232,7 +274,7 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
                         {
                           label: course.draft ? 'Publish' : 'Unpublish',
                           value: 'publish',
-                          onClick: () => handlePublish(course.id),
+                          onClick: () => course.draft ? handlePublish(course) : handleUnpublish(course),
                           className: course.draft ? 'text-green-600' : 'text-orange-600',
                         },
                         {

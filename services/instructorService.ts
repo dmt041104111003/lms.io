@@ -305,11 +305,44 @@ export const instructorService = {
     return apiRequestMultipart<CourseCreationResponse>('/api/course', formData);
   },
 
-  async updateCourse(courseId: string, data: CourseUpdateRequest): Promise<CourseResponse> {
-    return apiRequest<CourseResponse>(`/api/course/${courseId}`, {
+  async updateCourse(courseId: string, data: CourseUpdateRequest, imageFile?: File): Promise<CourseResponse> {
+    const formData = new FormData();
+    
+    const jsonData = JSON.stringify(data);
+    formData.append('data', new Blob([jsonData], { type: 'application/json' }));
+    
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    const url = `${API_BASE_URL}/api/course/${courseId}`;
+    
+    const config: RequestInit = {
       method: 'PUT',
-      body: JSON.stringify(data),
-    });
+      body: formData,
+      credentials: 'include',
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = responseData.message || `Request failed with status ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      if (responseData.code !== 1000) {
+        throw new Error(responseData.message || 'API error');
+      }
+
+      return responseData.result;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error occurred');
+    }
   },
 
   async deleteCourse(courseId: string): Promise<void> {
@@ -320,7 +353,7 @@ export const instructorService = {
 
   async publishCourse(courseId: string): Promise<void> {
     return apiRequest<void>(`/api/course/publish/${courseId}`, {
-      method: 'POST',
+      method: 'POST'
     });
   },
 

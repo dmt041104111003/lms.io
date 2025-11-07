@@ -69,8 +69,14 @@ export async function apiRequest<T>(
 
 function handleUserLogout() {
   if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    const isProtectedPage = pathname.startsWith('/instructor') || 
+                           pathname.startsWith('/admin') || 
+                           pathname.startsWith('/profile') || 
+                           pathname.startsWith('/my-courses');
+    
     localStorage.removeItem('access_token');
-    if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup')) {
+    if (isProtectedPage && !pathname.includes('/login') && !pathname.includes('/signup')) {
       window.location.href = '/login';
     }
   }
