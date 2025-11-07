@@ -203,10 +203,19 @@ export interface TestDetailResponse {
 }
 
 export interface QuestionResponse {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
+  id: string | number;
+  content: string;
+  imageUrl?: string;
+  orderIndex?: number;
+  score?: number;
+  answers?: AnswerResponse[];
+}
+
+export interface AnswerResponse {
+  id: string | number;
+  content: string;
+  isCorrect?: boolean;
+  correct?: boolean;
 }
 
 export interface InstructorProfileResponse {
