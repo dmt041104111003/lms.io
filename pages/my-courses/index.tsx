@@ -57,7 +57,7 @@ const MyCoursesPage: React.FC = () => {
                             {c.imageUrl && <img src={c.imageUrl} alt={c.title} className="w-14 h-10 object-cover rounded border" />}
                             <div className="text-sm font-medium text-gray-900">{c.title}</div>
                           </div>
-                          <button className="text-sm text-blue-600 hover:underline" onClick={() => router.push(`/courses/${c.id}`)}>Go to course</button>
+                          <button className="text-sm text-blue-600 hover:underline" onClick={() => router.push(`/learn/${c.id}`)}>Go to course</button>
                         </li>
                       ))}
                     </ul>
@@ -74,7 +74,9 @@ const MyCoursesPage: React.FC = () => {
                             <div className="text-sm font-medium text-gray-900">{e.courseTitle || 'Course'}</div>
                             <div className="text-xs text-gray-500">{new Date(e.createdAt || '').toLocaleString()}</div>
                           </div>
-                          <button className="text-sm text-blue-600 hover:underline" onClick={() => router.push('/courses')}>View courses</button>
+                          <button className="text-sm text-blue-600 hover:underline" onClick={() => e.courseId ? router.push(`/learn/${e.courseId}`) : router.push('/courses')}>
+                            {e.courseId ? 'Go to course' : 'View courses'}
+                          </button>
                         </li>
                       ))}
                     </ul>
