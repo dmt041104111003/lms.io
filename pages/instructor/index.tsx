@@ -13,8 +13,9 @@ import ToastContainer from '@/components/ui/ToastContainer';
 const InstructorDashboard: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const { toasts, removeToast } = useToast();
+  const { toasts, removeToast, error: showError } = useToast();
   const [dashboardData, setDashboardData] = useState<CourseDashboardResponse[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<CourseDashboardResponse | null>(null);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -22,21 +23,29 @@ const InstructorDashboard: React.FC = () => {
       
       try {
         const profile = await instructorService.getInstructorProfileByUserId(user.id);
+        console.log('Instructor profile:', profile);
+        
         if (profile?.id) {
           const data = await instructorService.getEducatorDashboard(profile.id);
-          setDashboardData(data);
+          console.log('Dashboard data:', data);
+          setDashboardData(data || []);
+        } else {
+          console.warn('No instructor profile found for user:', user.id);
+          showError('No instructor profile found');
         }
       } catch (error) {
         console.error('Failed to fetch dashboard:', error);
+        showError('Failed to load dashboard data');
+        setDashboardData([]);
       }
     };
 
     fetchDashboard();
-  }, [user]);
+  }, [user, showError]);
 
-  const totalStudents = dashboardData.reduce((sum, course) => sum + course.totalStudents, 0);
-  const totalRevenue = dashboardData.reduce((sum, course) => sum + course.revenue, 0);
-  const totalEnrollments = dashboardData.reduce((sum, course) => sum + course.totalEnrollments, 0);
+  const totalStudents = dashboardData.reduce((sum, course) => sum + (course.totalStudents || 0), 0);
+  const totalRevenue = dashboardData.reduce((sum, course) => sum + (course.revenue || 0), 0);
+  const totalEnrollments = dashboardData.reduce((sum, course) => sum + (course.totalEnrollments || 0), 0);
   const totalCourses = dashboardData.length;
 
   return (
@@ -102,17 +111,17 @@ const InstructorDashboard: React.FC = () => {
             <Card className="p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Statistics</h3>
               <div className="space-y-3">
-                {dashboardData.map((course) => (
+                {dashboardData.slice(0, 5).map((course) => (
                   <div key={course.courseId} className="border-b border-gray-200 pb-3 last:border-0">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-gray-900 truncate">{course.courseTitle}</div>
                         <div className="text-xs text-gray-600 mt-1">
-                          {course.totalStudents} students • ${course.revenue.toFixed(2)} revenue
+                          {course.totalStudents || 0} students • ${(course.revenue || 0).toFixed(2)} revenue
                         </div>
                       </div>
                       <Button
-                        onClick={() => router.push(`/instructor/courses/${course.courseId}`)}
+                        onClick={() => setSelectedCourse(course)}
                         variant="outline"
                         size="sm"
                         className="ml-4"
@@ -139,6 +148,70 @@ const InstructorDashboard: React.FC = () => {
             </Card>
           )}
         </div>
+        
+        {/* Course Details Dialog */}
+        {selectedCourse && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setSelectedCourse(null)}>
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">{selectedCourse.courseTitle}</h3>
+                  <button
+                    onClick={() => setSelectedCourse(null)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Close dialog"
+                    title="Close"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600">Total Students</div>
+                      <div className="text-2xl font-semibold text-gray-900 mt-1">{selectedCourse.totalStudents || 0}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600">Total Enrollments</div>
+                      <div className="text-2xl font-semibold text-gray-900 mt-1">{selectedCourse.totalEnrollments || 0}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600">Revenue</div>
+                      <div className="text-2xl font-semibold text-gray-900 mt-1">${(selectedCourse.revenue || 0).toFixed(2)}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="text-sm text-gray-600">Course ID</div>
+                      <div className="text-sm font-semibold text-gray-900 mt-1 break-all">{selectedCourse.courseId}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-3 mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedCourse(null)}
+                    size="sm"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setSelectedCourse(null);
+                      router.push(`/instructor/courses/${selectedCourse.courseId}`);
+                    }}
+                    size="sm"
+                  >
+                    View Full Details
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <ToastContainer toasts={toasts} onRemove={removeToast} />
       </InstructorLayout>
