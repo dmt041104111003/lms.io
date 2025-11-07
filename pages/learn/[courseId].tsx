@@ -9,6 +9,7 @@ import VideoPlayer from '@/components/learn/VideoPlayer';
 import LectureInfo from '@/components/learn/LectureInfo';
 import TestView from '@/components/learn/TestView';
 import CourseSidebar from '@/components/learn/CourseSidebar';
+import Dialog from '@/components/ui/Dialog';
 import instructorService, { TestDetailResponse, QuestionResponse } from '@/services/instructorService';
 
 interface ChapterSummary {
@@ -64,7 +65,32 @@ const LearnPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingTest, setLoadingTest] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [showTestConfirmDialog, setShowTestConfirmDialog] = useState(false);
+  const [pendingTest, setPendingTest] = useState<TestSummary | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [testTimeRemaining, setTestTimeRemaining] = useState<number | null>(null);
+  const [testStartTime, setTestStartTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (testTimeRemaining === null || testTimeRemaining <= 0 || testSubmitted) {
+      if (testTimeRemaining === 0 && !testSubmitted && selectedTest) {
+        handleSubmitTest();
+        setTestTimeRemaining(null);
+      }
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTestTimeRemaining((prev) => {
+        if (prev === null || prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [testTimeRemaining, testSubmitted, selectedTest]);
 
   useEffect(() => {
     if (!courseId || typeof courseId !== 'string') return;
@@ -121,22 +147,39 @@ const LearnPage: React.FC = () => {
     setTestScore(null);
   };
 
-  const handleTestClick = async (test: TestSummary) => {
+  const handleTestClick = (test: TestSummary) => {
     if (!courseId || typeof courseId !== 'string' || !user?.id) {
       showError('Please login to take the test');
       return;
     }
 
+    setPendingTest(test);
+    setShowTestConfirmDialog(true);
+  };
+
+  const handleConfirmTestStart = async () => {
+    if (!pendingTest || !courseId || typeof courseId !== 'string' || !user?.id) {
+      return;
+    }
+
+    setShowTestConfirmDialog(false);
+
     try {
       setLoadingTest(true);
-      setSelectedTest(test);
+      setSelectedTest(pendingTest);
       setSelectedLecture(null);
       setTestAnswers({});
       setTestSubmitted(false);
       setTestScore(null);
 
-      const detail = await instructorService.getTestDetail(courseId, String(test.id));
+      const detail = await instructorService.getTestDetail(courseId, String(pendingTest.id));
       setTestDetail(detail);
+
+      if (pendingTest.durationMinutes) {
+        const durationSeconds = pendingTest.durationMinutes * 60;
+        setTestTimeRemaining(durationSeconds);
+        setTestStartTime(new Date());
+      }
     } catch (error) {
       console.error('Failed to fetch test:', error);
       showError('Failed to load test. Please try again.');
@@ -196,6 +239,8 @@ const LearnPage: React.FC = () => {
 
   const handleSubmitTest = async () => {
     setShowSubmitDialog(false);
+    setTestTimeRemaining(null);
+    setTestStartTime(null);
     
     if (!testDetail || !user?.id || !courseId || typeof courseId !== 'string' || !selectedTest) {
       showError('Cannot submit test');
@@ -214,7 +259,7 @@ const LearnPage: React.FC = () => {
       };
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://lms-backend-0-0-1.onrender.com'}/api/course/${courseId}/tests/${selectedTest.id}/submit`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://lms-backend-0-0-1.onrender.com'}/api/course/${courseId}/tests/submit/${selectedTest.id}`,
         {
           method: 'POST',
           headers: {
@@ -309,6 +354,7 @@ const LearnPage: React.FC = () => {
                     testScore={testScore}
                     loadingTest={loadingTest}
                     showSubmitDialog={showSubmitDialog}
+                    testTimeRemaining={testTimeRemaining}
                     isMultipleChoice={isMultipleChoice}
                     onAnswerChange={handleAnswerChange}
                     onClearAnswer={handleClearAnswer}
@@ -319,6 +365,8 @@ const LearnPage: React.FC = () => {
                       setTestSubmitted(false);
                       setTestAnswers({});
                       setTestScore(null);
+                      setTestTimeRemaining(null);
+                      setTestStartTime(null);
                     }}
                   />
                 ) : (
@@ -369,6 +417,29 @@ const LearnPage: React.FC = () => {
         </div>
       </Layout>
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+        {/* Test Start Confirmation Dialog */}
+      {pendingTest && (
+        <Dialog
+          isOpen={showTestConfirmDialog}
+          title="Start Test"
+          message={
+            `Are you sure you want to start the test "${pendingTest.title}"?${
+              pendingTest.durationMinutes 
+                ? `\n\nDuration: ${pendingTest.durationMinutes} minutes\nOnce started, the timer will begin and the test will be automatically submitted when time runs out.`
+                : ''
+            }`
+          }
+          confirmText="Start Test"
+          cancelText="Cancel"
+          onConfirm={handleConfirmTestStart}
+          onCancel={() => {
+            setShowTestConfirmDialog(false);
+            setPendingTest(null);
+          }}
+          type="default"
+        />
+      )}
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

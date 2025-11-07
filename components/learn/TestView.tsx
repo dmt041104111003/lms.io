@@ -19,6 +19,7 @@ interface TestViewProps {
   testScore: number | null;
   loadingTest: boolean;
   showSubmitDialog: boolean;
+  testTimeRemaining?: number | null;
   isMultipleChoice: (question: QuestionResponse) => boolean;
   onAnswerChange: (questionId: string, answerId: number | string, question: QuestionResponse) => void;
   onClearAnswer: (questionId: string) => void;
@@ -36,6 +37,7 @@ const TestView: React.FC<TestViewProps> = ({
   testScore,
   loadingTest,
   showSubmitDialog,
+  testTimeRemaining,
   isMultipleChoice,
   onAnswerChange,
   onClearAnswer,
@@ -44,20 +46,51 @@ const TestView: React.FC<TestViewProps> = ({
   onCancelSubmit,
   onRetake,
 }) => {
+  const formatTime = (seconds: number | null): string => {
+    if (seconds === null || seconds < 0) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const getTimeColor = (seconds: number | null): string => {
+    if (!seconds || seconds === null) return 'text-gray-600';
+    if (seconds <= 60) return 'text-red-600';
+    if (seconds <= 300) return 'text-orange-600';
+    return 'text-gray-600';
+  };
   return (
     <div className="space-y-6">
       {/* Test Header */}
       <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">{testDetail.title}</h1>
-        {testDetail.description && (
-          <p className="text-gray-600 mb-4">{testDetail.description}</p>
-        )}
-        {test.durationMinutes && (
-          <p className="text-sm text-gray-500">Duration: {test.durationMinutes} minutes</p>
-        )}
-        {test.passScore && (
-          <p className="text-sm text-gray-500">Pass Score: {test.passScore}%</p>
-        )}
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1">
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">{testDetail.title}</h1>
+            {testDetail.description && (
+              <p className="text-gray-600 mb-4">{testDetail.description}</p>
+            )}
+            <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+              {test.durationMinutes && (
+                <p>Duration: {test.durationMinutes} minutes</p>
+              )}
+              {test.passScore && (
+                <p>Pass Score: {test.passScore}%</p>
+              )}
+            </div>
+          </div>
+          {testTimeRemaining !== null && testTimeRemaining !== undefined && !testSubmitted && (
+            <div className={`ml-4 px-4 py-2 rounded-lg border-2 ${
+              testTimeRemaining <= 60 ? 'border-red-500 bg-red-50' : 
+              testTimeRemaining <= 300 ? 'border-orange-500 bg-orange-50' : 
+              'border-blue-500 bg-blue-50'
+            }`}>
+              <div className="text-xs text-gray-600 mb-1">Time Remaining</div>
+              <div className={`text-2xl font-bold ${getTimeColor(testTimeRemaining)}`}>
+                {formatTime(testTimeRemaining)}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Test Questions */}
