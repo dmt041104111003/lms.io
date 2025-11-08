@@ -7,6 +7,9 @@ interface SecurityTabProps {
 }
 
 const SecurityTab: React.FC<SecurityTabProps> = ({ user }) => {
+  const methodName = (user.loginMethod && (user.loginMethod as any).name) || '';
+  const canChangePassword = methodName === 'EMAIL_PASSWORD';
+
   const handleChangePassword = () => {
     // TODO: Implement change password
     console.log('Change password');
@@ -21,7 +24,7 @@ const SecurityTab: React.FC<SecurityTabProps> = ({ user }) => {
           <ProfileInfoItem
             label="Password"
             value="••••••••"
-            onEdit={handleChangePassword}
+            onEdit={canChangePassword ? handleChangePassword : undefined}
             editLabel="Change"
           />
           

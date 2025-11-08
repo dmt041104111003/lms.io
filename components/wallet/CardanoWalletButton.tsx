@@ -159,12 +159,9 @@ const CardanoWalletButton: React.FC = () => {
       console.log('Using address:', address);
       setConnectedWallet(walletName);
 
-      const timestamp = Date.now();
-      
-      const message = `Sign this message to authenticate with Cardano2VN\n\nTimestamp: ${timestamp}`;
-      
-      const hexPayload = stringToHex(message);
-      console.log('Requesting signature for message:', message);
+      const { nonce } = await authService.generateNonce(address);
+      const hexPayload = stringToHex(nonce);
+      console.log('Requesting signature for nonce:', nonce);
       console.log('Hex payload:', hexPayload);
 
       const signResponse = await wallet.signData(address, hexPayload);
@@ -181,7 +178,7 @@ const CardanoWalletButton: React.FC = () => {
           address,
           signature: signResponse.signature,
           key: signResponse.key,
-          nonce: hexPayload,
+          nonce: nonce,
         });
 
         if (loginResponse.authenticated && loginResponse.token) {

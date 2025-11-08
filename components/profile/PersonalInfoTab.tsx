@@ -9,6 +9,21 @@ interface PersonalInfoTabProps {
 
 const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({ user, onRefresh }) => {
   const fullName = (user.fullName || '').trim() || 'Not set';
+  const methodName = (user.loginMethod && (user.loginMethod as any).name) || '';
+
+  let idLabel = 'Email';
+  let idValue = '';
+  if (methodName === 'GITHUB') {
+    idLabel = 'GitHub';
+    idValue = (user.github || '').trim();
+  } else if (methodName === 'WALLET') {
+    idLabel = 'Wallet address';
+    idValue = (user.walletAddress || '').trim();
+  } else {
+    idLabel = 'Email';
+    idValue = (user.email || '').trim();
+  }
+  if (!idValue) idValue = 'Not set';
 
   const handleEdit = (field: string) => {
     // TODO: Implement edit functionality
@@ -27,12 +42,9 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({ user, onRefresh }) =>
             onEdit={() => handleEdit('name')}
           />
           
-          
-          
           <ProfileInfoItem
-            label="Email"
-            value={user.email}
-            onEdit={() => handleEdit('email')}
+            label={idLabel}
+            value={idValue}
           />
           
         </div>
