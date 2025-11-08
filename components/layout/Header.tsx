@@ -11,10 +11,10 @@ const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fullName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : '';
-  const initials = user && user.firstName && user.lastName
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : user?.username[0]?.toUpperCase() || 'U';
+  const displayName = user ? (user.fullName?.trim() || (user.email?.split('@')[0] || '')) : '';
+  const initials = user?.fullName?.trim()
+    ? user.fullName.trim().split(' ').filter(Boolean).slice(0, 2).map((part: string) => part[0]).join('').toUpperCase()
+    : (user?.email?.[0]?.toUpperCase() || 'U');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +130,7 @@ const Header: React.FC = () => {
                       {user.imageUrl ? (
                         <img
                           src={user.imageUrl}
-                          alt={fullName}
+                          alt={displayName}
                           className="w-8 h-8 rounded-full object-cover"
                         />
                       ) : (
@@ -138,7 +138,7 @@ const Header: React.FC = () => {
                           {initials}
                         </div>
                       )}
-                      <span className="hidden lg:inline">{fullName || user.username}</span>
+                      <span className="hidden lg:inline">{displayName}</span>
                     </Link>
                   </div>
                 ) : (
@@ -267,7 +267,7 @@ const Header: React.FC = () => {
                         {user.imageUrl ? (
                           <img
                             src={user.imageUrl}
-                            alt={fullName}
+                            alt={displayName}
                             className="w-8 h-8 rounded-full object-cover"
                           />
                         ) : (
@@ -275,7 +275,7 @@ const Header: React.FC = () => {
                             {initials}
                           </div>
                         )}
-                        <span>{fullName || user.username}</span>
+                        <span>{displayName}</span>
                       </Link>
                     </>
                   ) : (

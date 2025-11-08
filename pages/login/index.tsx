@@ -31,21 +31,13 @@ const Login: React.FC = () => {
 
   const handleLogin = async (data: { email: string; password: string; rememberMe: boolean }) => {
     try {
-      let username = data.email;
-      if (data.email.toLowerCase().trim() !== 'admin' && data.email.includes('@')) {
-        const emailParts = data.email.split('@');
-        username = emailParts[0] || data.email;
-      }
-      
       const response = await authService.login({
-        username: username,
+        email: data.email,
         password: data.password,
       });
       
       if (response.authenticated) {
-        if (data.rememberMe && response.token) {
-          localStorage.setItem('access_token', response.token);
-        }
+        if (data.rememberMe && response.token) localStorage.setItem('access_token', response.token);
         success('Login successful!');
         router.push('/home');
       }

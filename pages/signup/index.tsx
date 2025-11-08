@@ -22,30 +22,16 @@ const Signup: React.FC = () => {
     agreeToTerms: boolean;
   }) => {
     try {
-      const nameParts = data.fullName.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || firstName;
-
-      const emailParts = data.email.split('@');
-      let username = emailParts[0] || `user_${Date.now()}`;
-      
-      if (username.length < 4) {
-        const timestamp = Date.now().toString().slice(-3); 
-        username = username + timestamp;
-      }
-
       await authService.signup({
-        username: username,
-        password: data.password,
-        firstName: firstName,
-        lastName: lastName,
+        fullName: data.fullName.trim(),
         email: data.email,
+        password: data.password,
       });
 
-      success('Account created successfully! Redirecting to login...');
+      success('Account created successfully! Please verify your email.');
       setTimeout(() => {
-        router.push('/login?signup=success');
-      }, 1500);
+        router.push(`/verify-email?email=${encodeURIComponent(data.email)}`);
+      }, 1200);
     } catch (err) {
       let errorMessage = 'Signup failed. Please try again.';
       

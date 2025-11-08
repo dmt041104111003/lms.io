@@ -152,11 +152,13 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRefresh, onEdit, 
             </thead>
             <tbody className="bg-white">
               {users.map((user) => {
-                const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || '';
-                const displayName = truncateText(fullName, 15);
+                const fullName = (user.fullName || '').trim();
+                const displayName = truncateText(fullName || (user.email?.split('@')[0] || ''), 15);
                 const emailOrMethod = user.email || user.loginMethod?.name || 'N/A';
                 const displayEmail = truncateText(emailOrMethod, 18);
-                const displayUsername = truncateText(user.username, 12);
+                const initials = fullName
+                  ? fullName.split(' ').filter(Boolean).slice(0, 2).map((p: string) => p[0]).join('').toUpperCase()
+                  : (user.email?.[0]?.toUpperCase() || 'U');
 
                 return (
                   <tr key={user.id} className="hover:bg-gray-50 border-b border-gray-300">
@@ -170,7 +172,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRefresh, onEdit, 
                           />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-                            {user.firstName?.[0]}{user.lastName?.[0]}
+                            {initials}
                           </div>
                         )}
                         <div className="ml-2 min-w-0 flex-1">
@@ -247,11 +249,13 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRefresh, onEdit, 
         {/* Mobile Card View */}
         <div className="md:hidden divide-y divide-gray-200">
           {users.map((user) => {
-            const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || '';
-            const displayName = truncateText(fullName, 15);
+            const fullName = (user.fullName || '').trim();
+            const displayName = truncateText(fullName || (user.email?.split('@')[0] || ''), 15);
             const emailOrMethod = user.email || user.loginMethod?.name || 'N/A';
             const displayEmail = truncateText(emailOrMethod, 18);
-            const displayUsername = truncateText(user.username, 12);
+            const initials = fullName
+              ? fullName.split(' ').filter(Boolean).slice(0, 2).map((p: string) => p[0]).join('').toUpperCase()
+              : (user.email?.[0]?.toUpperCase() || 'U');
 
             return (
               <div key={user.id} className="p-4 hover:bg-gray-50">
@@ -265,7 +269,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRefresh, onEdit, 
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-                        {user.firstName?.[0]}{user.lastName?.[0]}
+                        {initials}
                       </div>
                     )}
                     <div className="ml-2 flex-1 min-w-0">

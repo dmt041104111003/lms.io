@@ -10,19 +10,15 @@ export interface PageResponse<T> {
 
 export interface UserResponse {
   id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
   email?: string;
+  fullName?: string;
   status: string;
   imageUrl?: string;
-  dob?: string;
-  role?: {
-    name?: string;
-  };
-  loginMethod?: {
-    name?: string;
-  };
+  walletAddress?: string;
+  google?: string;
+  github?: string;
+  role?: { name?: string };
+  loginMethod?: any;
 }
 
 export interface RoleResponse {

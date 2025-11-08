@@ -1,7 +1,7 @@
 import apiRequest from '@/lib/api';
 
 export interface LoginRequest {
-  username?: string;
+  email?: string;
   password?: string;
   loginMethod: string;
   address?: string;
@@ -16,35 +16,30 @@ export interface LoginResponse {
 }
 
 export interface SignupRequest {
-  username: string;
-  password: string;
-  firstName: string;
-  lastName: string;
   email: string;
-  dob?: string; // ISO date string
-  loginMethod?: string;
+  password: string;
+  fullName: string;
 }
 
 export interface UserResponse {
   id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
   email: string;
+  fullName: string;
   status: string;
+  google?: string;
+  github?: string;
   imageUrl?: string;
-  dob?: string;
-  role?: {
-    name?: string;
-  };
+  walletAddress?: string;
+  loginMethod?: any;
+  role?: { name?: string };
 }
 
 export const authService = {
-  async login(credentials: { username: string; password: string }): Promise<LoginResponse> {
+  async login(credentials: { email: string; password: string }): Promise<LoginResponse> {
     const request: LoginRequest = {
-      username: credentials.username,
+      email: credentials.email,
       password: credentials.password,
-      loginMethod: 'USERNAME_PASSWORD',
+      loginMethod: 'EMAIL_PASSWORD',
     };
     return apiRequest<LoginResponse>('/api/auth/token', {
       method: 'POST',
@@ -52,25 +47,14 @@ export const authService = {
     });
   },
 
-  async signup(userData: {
-    username: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    dob?: string;
-  }): Promise<UserResponse> {
+  async signup(userData: { fullName: string; email: string; password: string }): Promise<string> {
     const request: SignupRequest = {
-      username: userData.username,
-      password: userData.password,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
       email: userData.email,
-      dob: userData.dob,
-      loginMethod: 'USERNAME_PASSWORD',
+      password: userData.password,
+      fullName: userData.fullName,
     };
     try {
-      return await apiRequest<UserResponse>('/api/users', {
+      return await apiRequest<string>('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(request),
       });
@@ -98,6 +82,20 @@ export const authService = {
     return apiRequest<{ nonce: string }>('/api/nonce', {
       method: 'POST',
       body: JSON.stringify({ address }),
+    });
+  },
+
+  async resendVerificationCode(email: string): Promise<string> {
+    return apiRequest<string>('/api/auth/resend-code', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async verifyEmail(params: { email: string; code: string }): Promise<string> {
+    return apiRequest<string>('/api/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ email: params.email, code: params.code }),
     });
   },
 

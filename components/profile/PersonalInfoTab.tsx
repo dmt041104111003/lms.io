@@ -8,7 +8,7 @@ interface PersonalInfoTabProps {
 }
 
 const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({ user, onRefresh }) => {
-  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Not set';
+  const fullName = (user.fullName || '').trim() || 'Not set';
 
   const handleEdit = (field: string) => {
     // TODO: Implement edit functionality
@@ -27,11 +27,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({ user, onRefresh }) =>
             onEdit={() => handleEdit('name')}
           />
           
-          <ProfileInfoItem
-            label="Username"
-            value={user.username}
-            onEdit={() => handleEdit('username')}
-          />
+          
           
           <ProfileInfoItem
             label="Email"
@@ -39,13 +35,6 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({ user, onRefresh }) =>
             onEdit={() => handleEdit('email')}
           />
           
-          {user.dob && (
-            <ProfileInfoItem
-              label="Date of birth"
-              value={new Date(user.dob).toLocaleDateString()}
-              onEdit={() => handleEdit('dob')}
-            />
-          )}
         </div>
       </div>
     </div>

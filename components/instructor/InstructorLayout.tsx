@@ -15,10 +15,10 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children, loading =
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const fullName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : '';
-  const initials = user && user.firstName && user.lastName
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : user?.username[0]?.toUpperCase() || 'I';
+  const displayName = user ? (user.fullName?.trim() || (user.email?.split('@')[0] || '')) : '';
+  const initials = user?.fullName?.trim()
+    ? user.fullName.trim().split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+    : (user?.email?.[0]?.toUpperCase() || 'I');
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
@@ -43,7 +43,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children, loading =
                 {user.imageUrl ? (
                   <img
                     src={user.imageUrl}
-                    alt={fullName}
+                    alt={displayName}
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
@@ -51,7 +51,7 @@ const InstructorLayout: React.FC<InstructorLayoutProps> = ({ children, loading =
                     {initials}
                   </div>
                 )}
-                <span className="hidden md:inline text-sm text-gray-700">{fullName || user.username}</span>
+                <span className="hidden md:inline text-sm text-gray-700">{displayName}</span>
               </div>
             )}
           </div>

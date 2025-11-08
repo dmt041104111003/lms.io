@@ -6,10 +6,10 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {
-  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username;
-  const initials = user.firstName && user.lastName
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : user.username[0]?.toUpperCase() || 'U';
+  const displayName = user.fullName?.trim() || (user.email?.split('@')[0] || 'User');
+  const initials = user.fullName?.trim()
+    ? user.fullName.trim().split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase()
+    : (user.email?.[0]?.toUpperCase() || 'U');
 
   return (
     <div className="bg-white border-b border-gray-200">
@@ -20,7 +20,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {
             {user.imageUrl ? (
               <img
                 src={user.imageUrl}
-                alt={fullName}
+                alt={displayName}
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
@@ -33,7 +33,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user }) => {
           {/* Name and Email */}
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-normal text-gray-900 truncate">
-              {fullName}
+              {displayName}
             </h1>
             <p className="text-sm text-gray-600 truncate">{user.email}</p>
           </div>
