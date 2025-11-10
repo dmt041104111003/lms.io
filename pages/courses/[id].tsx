@@ -3,11 +3,11 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/layout/Layout';
 import SEO from '@/components/ui/SEO';
 import Card from '@/components/ui/Card';
-import instructorService, { CourseResponse } from '@/services/instructorService';
+import instructorService, { CourseResponse, InstructorProfileResponse } from '@/services/instructorService';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import ToastContainer from '@/components/ui/ToastContainer';
-import { FiTag } from 'react-icons/fi';
+import { FiTag, FiClock, FiBookOpen, FiCheckSquare, FiCalendar, FiRefreshCw } from 'react-icons/fi';
 
 interface ChapterSummary {
   id: number;
@@ -46,6 +46,7 @@ interface CourseDetail {
   imageUrl?: string;
   videoUrl?: string;
   price?: number;
+  currency?: string;
   discount?: number;
   discountEndTime?: Date;
   createdAt?: Date;
@@ -70,7 +71,8 @@ const CourseDetailPage: React.FC = () => {
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [rawCourse, setRawCourse] = useState<any | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
+  
+  const [instructor, setInstructor] = useState<InstructorProfileResponse | null>(null);
   
   const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +108,7 @@ const CourseDetailPage: React.FC = () => {
             imageUrl: result.imageUrl,
             videoUrl: result.videoUrl,
             price: result.price,
+            currency: (result as any).currency,
             discount: result.discount,
             discountEndTime: result.discountEndTime,
             createdAt: result.createdAt,
@@ -146,6 +149,7 @@ const CourseDetailPage: React.FC = () => {
             imageUrl: data.imageUrl,
             videoUrl: (data as any).videoUrl,
             price: data.price,
+            currency: (data as any).currency,
             courseType: data.courseType,
             chapters: [],
             courseTests: [],
@@ -164,6 +168,24 @@ const CourseDetailPage: React.FC = () => {
 
     fetchCourse();
   }, [id, user]);
+
+  useEffect(() => {
+    if (!course) return;
+    const load = async () => {
+      try {
+        if (course.instructorId) {
+          const data = await instructorService.getInstructorProfileById(course.instructorId);
+          setInstructor(data);
+          return;
+        }
+        if (course.instructorUserId) {
+          const data = await instructorService.getInstructorProfileByUserId(course.instructorUserId);
+          setInstructor(data);
+        }
+      } catch {}
+    };
+    load();
+  }, [course]);
 
   if (error) {
     return (
@@ -188,6 +210,11 @@ const CourseDetailPage: React.FC = () => {
       ? 'Free'
       : `$${course.price}`;
 
+  const discountPercent = Number((course as any).discount || 0);
+  const originalPrice = Number(course.price || 0);
+  const hasDiscount = originalPrice > 0 && discountPercent > 0;
+  const finalPrice = hasDiscount ? +(originalPrice * (1 - discountPercent / 100)).toFixed(2) : originalPrice;
+
   // Access defensively since videoUrl may not be in the typed interface
   const previewUrl = (course as unknown as { videoUrl?: string }).videoUrl;
 
@@ -210,6 +237,82 @@ const CourseDetailPage: React.FC = () => {
   };
   const youtubeEmbedUrl = getYouTubeEmbedUrl(previewUrl);
 
+  const stats = (() => {
+    if (!course) return null;
+    let lectureCount = 0;
+    let testCount = 0;
+    let lectureSeconds = 0;
+    let testSeconds = 0;
+    (course.chapters || []).forEach((ch) => {
+      const lecs = ch.lectures || [];
+      lectureCount += lecs.length;
+      lecs.forEach((l) => { lectureSeconds += l.duration || 0; });
+      const tests = ch.tests || [];
+      testCount += tests.length;
+      tests.forEach((t) => { testSeconds += (t.durationMinutes || 0) * 60; });
+    });
+    const ctests = course.courseTests || [];
+    testCount += ctests.length;
+    ctests.forEach((t) => { testSeconds += (t.durationMinutes || 0) * 60; });
+    return { lectureCount, testCount, lectureSeconds, testSeconds, totalSeconds: lectureSeconds + testSeconds };
+  })();
+
+  const formatDate = (d?: Date) => {
+    if (!d) return '-';
+    const dt = new Date(d as any);
+    if (isNaN(dt.getTime())) return '-';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${dt.getFullYear()}`;
+  };
+
+  const formatDuration = (secs: number) => {
+    if (!secs) return '0 min';
+    const totalMins = Math.floor(secs / 60);
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m} min`;
+  };
+
+  const formatDateTime = (d?: Date) => {
+    if (!d) return '-';
+    const dt = new Date(d as any);
+    if (isNaN(dt.getTime())) return '-';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${dt.getFullYear()} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  };
+
+  const formatPrice = (amount: number, currency?: string) => {
+    try {
+      if (currency && currency.toUpperCase() === 'VND') {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
+      }
+      if (currency && currency.toUpperCase() !== 'USD') {
+        return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency.toUpperCase() as any }).format(amount);
+      }
+      return `$${(amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2))}`;
+    } catch {
+      return `$${(amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2))}`;
+    }
+  };
+
+  const getTimeLeftString = (d?: Date) => {
+    if (!d) return null;
+    const end = new Date(d as any).getTime();
+    if (isNaN(end)) return null;
+    const now = Date.now();
+    const diff = end - now;
+    if (diff <= 0) return null;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const hourMs = 60 * 60 * 1000;
+    const minMs = 60 * 1000;
+    const days = Math.floor(diff / dayMs);
+    const hours = Math.floor((diff % dayMs) / hourMs);
+    const minutes = Math.floor((diff % hourMs) / minMs);
+    if (days >= 1) return `${days} day${days > 1 ? 's' : ''} left at this price!`;
+    if (hours >= 1) return `${hours} hour${hours > 1 ? 's' : ''} left at this price!`;
+    return `${minutes} minute${minutes > 1 ? 's' : ''} left at this price!`;
+  };
+
   return (
     <>
       <SEO
@@ -228,7 +331,8 @@ const CourseDetailPage: React.FC = () => {
                 {course.shortDescription && (
                   <p className="text-gray-600 mb-4">{course.shortDescription}</p>
                 )}
-                {showPreview && previewUrl ? (
+                
+                {previewUrl ? (
                   <div className="w-full overflow-hidden rounded-lg border border-gray-200">
                     <div className="w-full aspect-video bg-black">
                       {youtubeEmbedUrl ? (
@@ -286,80 +390,29 @@ const CourseDetailPage: React.FC = () => {
                       ))}
                     </div>
                   </>
-                  
                 ) : null}
 
-                {/* Chapters */}
-                {course.chapters && course.chapters.length > 0 && (
+                {instructor && (
                   <Card className="p-6 mt-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Content</h2>
-                    <div className="space-y-4">
-                      {course.chapters
-                        .sort((a, b) => a.orderIndex - b.orderIndex)
-                        .map((chapter) => (
-                          <div key={chapter.id} className="border border-gray-200 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <h3 className="text-lg font-medium text-gray-900">
-                                Chapter {chapter.orderIndex + 1}: {chapter.title}
-                              </h3>
-                            </div>
-
-                            {/* Lectures */}
-                            {chapter.lectures && chapter.lectures.length > 0 && (
-                              <div className="mb-3">
-                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Lectures:</h4>
-                                <div className="space-y-2 ml-4">
-                                  {chapter.lectures
-                                    .sort((a, b) => a.orderIndex - b.orderIndex)
-                                    .map((lecture) => (
-                                      <div key={lecture.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                        <div className="flex-1">
-                                          <div className="text-sm font-medium text-gray-900">
-                                            {lecture.orderIndex + 1}. {lecture.title}
-                                          </div>
-                                          {lecture.description && (
-                                            <div className="text-xs text-gray-600 mt-1">{lecture.description}</div>
-                                          )}
-                                          {lecture.duration && (
-                                            <div className="text-xs text-gray-500 mt-1">Duration: {lecture.duration} min</div>
-                                          )}
-                                        </div>
-                                        {lecture.previewFree && (
-                                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Free Preview</span>
-                                        )}
-                                      </div>
-                                    ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Tests */}
-                            {chapter.tests && chapter.tests.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Tests:</h4>
-                                <div className="space-y-2 ml-4">
-                                  {chapter.tests
-                                    .sort((a, b) => a.orderIndex - b.orderIndex)
-                                    .map((test) => (
-                                      <div key={test.id} className="flex items-center justify-between p-2 bg-blue-50 rounded">
-                                        <div className="flex-1">
-                                          <div className="text-sm font-medium text-gray-900">
-                                            {test.orderIndex + 1}. {test.title}
-                                          </div>
-                                          {test.durationMinutes && (
-                                            <div className="text-xs text-gray-600 mt-1">Duration: {test.durationMinutes} minutes</div>
-                                          )}
-                                          {test.passScore && (
-                                            <div className="text-xs text-gray-600 mt-1">Pass Score: {test.passScore}%</div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ))}
-                                </div>
-                              </div>
-                            )}
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Instructor</h2>
+                    <div className="flex items-start gap-4">
+                      {instructor.avatar ? (
+                        <img src={instructor.avatar} alt={instructor.name || 'Instructor'} className="w-16 h-16 rounded-full object-cover" />
+                      ) : null}
+                      <div className="flex-1">
+                        <div className="text-lg font-medium text-gray-900">{instructor.name || 'Instructor'}</div>
+                        {instructor.expertise && <div className="text-sm text-gray-600 mt-1">{instructor.expertise}</div>}
+                        {instructor.bio && <p className="text-sm text-gray-700 mt-2 whitespace-pre-line">{instructor.bio}</p>}
+                        {instructor.socialLinks && instructor.socialLinks.length > 0 && (
+                          <div className="flex gap-3 mt-3">
+                            {instructor.socialLinks.map((link) => (
+                              <a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm">
+                                {link.name || link.platform || 'Link'}
+                              </a>
+                            ))}
                           </div>
-                        ))}
+                        )}
+                      </div>
                     </div>
                   </Card>
                 )}
@@ -402,7 +455,33 @@ const CourseDetailPage: React.FC = () => {
               <div className="lg:col-span-1">
                 <div className="sticky top-24 space-y-4">
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <div className="text-2xl font-semibold text-gray-900">{priceLabel}</div>
+                    {course.imageUrl && (
+                      <div className="mb-3 overflow-hidden rounded-md border border-gray-200">
+                        <img src={course.imageUrl} alt={course.title} className="w-full aspect-video object-cover" />
+                      </div>
+                    )}
+                    {priceLabel === 'Free' ? (
+                      <div className="text-2xl font-semibold text-gray-900">Free</div>
+                    ) : (
+                      <div className="mt-1">
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <div className="text-2xl font-semibold text-gray-900">{formatPrice(finalPrice, course.currency)}</div>
+                          {hasDiscount && (
+                            <>
+                              <div className="text-sm line-through text-gray-500">{formatPrice(originalPrice, course.currency)}</div>
+                              <span className="text-sm text-gray-700">{discountPercent}% off</span>
+                            </>
+                          )}
+                        </div>
+                        {hasDiscount && course.discountEndTime && (
+                          <div className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                            <FiClock />
+                            <span>{getTimeLeftString(course.discountEndTime) || `Ends ${formatDateTime(course.discountEndTime)}`}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                   
                     <div className="mt-4 grid grid-cols-1 gap-3">
                       <div className="grid grid-cols-1 gap-3">
                         <button
@@ -477,14 +556,34 @@ const CourseDetailPage: React.FC = () => {
                           </button>
                         )}
                       </div>
-                      <button
-                        className="w-full inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => setShowPreview(prev => !prev)}
-                        disabled={!previewUrl}
-                      >
-                        {previewUrl ? (showPreview ? 'Close Preview' : 'Preview') : 'No preview available'}
-                      </button>
                     </div>
+                     {stats && (
+                      <div className="mt-6">
+                        <div className="text-sm font-medium text-gray-900 mb-2">This course includes</div>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          <li className="flex items-center gap-2">
+                            <FiClock size={16} className="text-gray-600" />
+                            <span>{formatDuration(stats.lectureSeconds)} on-demand video</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <FiBookOpen size={16} className="text-gray-600" />
+                            <span>{stats.lectureCount} lectures</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <FiCheckSquare size={16} className="text-gray-600" />
+                            <span>{stats.testCount} tests</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <FiCalendar size={16} className="text-gray-600" />
+                            <span>Created {formatDate(course.createdAt)}</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <FiRefreshCw size={16} className="text-gray-600" />
+                            <span>Updated {formatDate(course.updatedAt)}</span>
+                          </li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 
                 </div>
