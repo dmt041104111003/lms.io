@@ -14,33 +14,15 @@ const InstructorCourses: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [courses, setCourses] = useState<PageResponse<CourseResponse> | null>(null);
-  const [instructorProfileId, setInstructorProfileId] = useState<number | null>(null);
   const [keyword, setKeyword] = useState('');
   const debouncedKeyword = useDebounce(keyword, 500);
   const [selectedType, setSelectedType] = useState('');
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
-  // Fetch instructor profile ID
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user?.id) return;
-      try {
-        const profile = await instructorService.getInstructorProfileByUserId(user.id);
-        if (profile?.id) {
-          setInstructorProfileId(profile.id);
-        }
-      } catch (error) {
-        console.error('Failed to fetch instructor profile:', error);
-      }
-    };
-    fetchProfile();
-  }, [user]);
-
   const fetchCourses = async () => {
-    if (!instructorProfileId) return;
     try {
-      const data = await instructorService.getCoursesByProfile(instructorProfileId, 0, 1000);
+      const data = await instructorService.getMyCoursesAll(0, 1000);
       
       let filtered = data.content;
       if (debouncedKeyword) {
@@ -78,10 +60,10 @@ const InstructorCourses: React.FC = () => {
   };
 
   useEffect(() => {
-    if (instructorProfileId) {
+    if (user) {
       fetchCourses();
     }
-  }, [instructorProfileId, debouncedKeyword, selectedType, page, size]);
+  }, [user, debouncedKeyword, selectedType, page, size]);
 
   useEffect(() => {
     setPage(0);

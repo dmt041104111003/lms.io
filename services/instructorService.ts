@@ -30,6 +30,7 @@ export interface CourseSearchParams {
   minPrice?: number;
   maxPrice?: number;
   tagId?: string;
+  sort?: 'popular' | 'new';
   page?: number;
   size?: number;
 }
@@ -115,7 +116,8 @@ export interface AnswerRequest {
 }
 
 export interface PaymentOptionRequest {
-  paymentMethodId: number;
+  paymentMethodId: string;
+  receiverAddress: string;
 }
 
 export interface CourseCreationResponse {
@@ -169,6 +171,26 @@ export interface CourseShortResponse {
   title: string;
 }
 
+export interface CourseShortInformationResponse {
+  id: string;
+  title: string;
+  imageUrl?: string;
+  draft: boolean;
+  courseType?: string;
+  price?: number;
+  discount?: number;
+}
+
+export interface MediaItem {
+  id: number;
+  title?: string;
+  description?: string;
+  url: string;
+  link?: string;
+  orderIndex?: number;
+  type?: string;
+}
+
 export interface EnrollmentResponse {
   id: string;
   userId: string;
@@ -183,6 +205,7 @@ export interface EnrollCourseRequest {
   courseId: string;
   coursePaymentMethodId?: number;
   priceAda?: number;
+  senderAddress?: string;
   txHash?: string;
 }
 
@@ -230,7 +253,8 @@ export interface InstructorProfileResponse {
 
 export interface SocialLinkResponse {
   id: number;
-  platform: string;
+  platform?: string;
+  name?: string;
   url: string;
 }
 
@@ -240,6 +264,11 @@ export interface TagResponse {
   slug: string;
   createdAt?: string;
   numOfCourses?: number;
+}
+
+export interface TopInstructorResponse {
+  id: number;
+  name: string;
 }
 
 // Helper function để gửi multipart form data
@@ -284,6 +313,13 @@ export const instructorService = {
     });
   },
 
+  async getCoursesByTag(tagId: string, page: number = 0, size: number = 10): Promise<PageResponse<CourseResponse>> {
+    const endpoint = `/api/course/by-tag?tagId=${encodeURIComponent(tagId)}&page=${page}&size=${size}`;
+    return apiRequest<PageResponse<CourseResponse>>(endpoint, {
+      method: 'GET',
+    });
+  },
+
   async searchCourses(params: CourseSearchParams = {}): Promise<PageResponse<CourseResponse>> {
     const queryParams = new URLSearchParams();
     if (params.keyword) queryParams.append('keyword', params.keyword);
@@ -291,6 +327,7 @@ export const instructorService = {
     if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
     if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
     if (params.tagId) queryParams.append('tagId', params.tagId);
+    if (params.sort) queryParams.append('sort', params.sort);
     if (params.page !== undefined) queryParams.append('page', params.page.toString());
     if (params.size !== undefined) queryParams.append('size', params.size.toString());
 
@@ -302,6 +339,37 @@ export const instructorService = {
 
   async getCoursesByProfile(profileId: number, page: number = 0, size: number = 10): Promise<PageResponse<CourseResponse>> {
     return apiRequest<PageResponse<CourseResponse>>(`/api/course/profile/${profileId}?page=${page}&size=${size}`, {
+      method: 'GET',
+    });
+  },
+
+  async getMyCoursesAll(page: number = 0, size: number = 10): Promise<PageResponse<CourseResponse>> {
+    const res = await apiRequest<PageResponse<CourseShortInformationResponse>>(`/api/course/profile/me/all?page=${page}&size=${size}`, {
+      method: 'GET',
+    });
+    // Map to CourseResponse for UI compatibility
+    return {
+      ...res,
+      content: (res.content || []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        imageUrl: c.imageUrl,
+        draft: c.draft,
+        courseType: c.courseType,
+        price: c.price,
+        status: c.draft ? 'DRAFT' : 'PUBLISHED',
+      } as CourseResponse)),
+    };
+  },
+
+  async getInstructorProfileById(id: number): Promise<InstructorProfileResponse> {
+    return apiRequest<InstructorProfileResponse>(`/api/instructor-profiles/${id}`, {
+      method: 'GET',
+    });
+  },
+
+  async getSlides(): Promise<MediaItem[]> {
+    return apiRequest<MediaItem[]>(`/api/media?type=SLIDE`, {
       method: 'GET',
     });
   },
@@ -325,7 +393,68 @@ export const instructorService = {
     const formData = new FormData();
     
     // Add JSON data
-    const jsonData = JSON.stringify(data);
+    // Transform UI shapes to backend DTO shapes
+    const transformAnswers = (answers?: AnswerRequest[]) =>
+      (answers || []).map(a => ({
+        id: a.id,
+        content: a.content,
+        correct: a.isCorrect,
+        orderIndex: a.orderIndex,
+      }));
+
+    const transformQuestions = (questions?: QuestionRequest[]) =>
+      (questions || []).map(q => ({
+        id: q.id,
+        content: q.content,
+        score: q.score,
+        imageUrl: q.imageUrl,
+        orderIndex: q.orderIndex,
+        answers: transformAnswers(q.answers),
+      }));
+
+    const transformTests = (tests?: TestRequest[]) =>
+      (tests || []).map(t => ({
+        id: t.id,
+        title: t.title,
+        durationMinutes: t.durationMinutes,
+        rule: t.rule,
+        passScore: t.passScore,
+        orderIndex: t.orderIndex,
+        questions: transformQuestions(t.questions),
+      }));
+
+    const normalizeDateTime = (s?: string) => {
+      if (!s) return undefined;
+      if (s.includes('T')) {
+        // 'yyyy-MM-ddTHH:mm' -> add seconds
+        return s.length === 16 ? `${s}:00` : s;
+      }
+      // Fallback: parse and format as ISO local without timezone
+      try {
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          const pad = (n: number) => String(n).padStart(2, '0');
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+      } catch {}
+      return s;
+    };
+
+    const payload: any = {
+      ...data,
+      paymentMethods: (data.paymentMethods || []).map(pm => ({
+        paymentMethodId: pm.paymentMethodId,
+        receiverAddress: pm.receiverAddress,
+      })),
+      discountEndTime: normalizeDateTime(data.discountEndTime),
+      courseTests: transformTests(data.courseTests) as any,
+      chapters: (data.chapters || []).map(ch => ({
+        ...(ch as any),
+        tests: transformTests(ch.tests) as any,
+      })) as any,
+    };
+
+    const jsonData = JSON.stringify(payload);
     formData.append('data', new Blob([jsonData], { type: 'application/json' }));
     
     // Add image if provided
@@ -384,7 +513,13 @@ export const instructorService = {
 
   async publishCourse(courseId: string): Promise<void> {
     return apiRequest<void>(`/api/course/publish/${courseId}`, {
-      method: 'POST'
+      method: 'PUT'
+    });
+  },
+
+  async unpublishCourse(courseId: string): Promise<void> {
+    return apiRequest<void>(`/api/course/unpublish/${courseId}`, {
+      method: 'PUT'
     });
   },
 
@@ -451,20 +586,25 @@ export const instructorService = {
     });
   },
 
-  // Instructor Profile
-              async getInstructorProfileByUserId(userId: string): Promise<InstructorProfileResponse> {
-                return apiRequest<InstructorProfileResponse>(`/api/instructor-profiles/user/${userId}`, {
-                  method: 'GET',
-                });
-              },
+// Instructor Profile
+  async getInstructorProfileByUserId(userId: string): Promise<InstructorProfileResponse> {
+    return apiRequest<InstructorProfileResponse>(`/api/instructor-profiles/user/${userId}`, {
+      method: 'GET',
+    });
+  },
 
-              // Tag Management
-              async getAllTags(): Promise<TagResponse[]> {
-                return apiRequest<TagResponse[]>('/api/tags', {
-                  method: 'GET',
-                });
-              },
-            };
+  // Tag Management
+  async getTopInstructors(limit: number = 8): Promise<TopInstructorResponse[]> {
+    return apiRequest<TopInstructorResponse[]>(`/api/instructor-profiles/top?limit=${limit}`, {
+      method: 'GET',
+    });
+  },
+  async getAllTags(): Promise<TagResponse[]> {
+    return apiRequest<TagResponse[]>('/api/tags', {
+      method: 'GET',
+    });
+  },
+};
 
-            export default instructorService;
+export default instructorService;
 

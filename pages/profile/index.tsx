@@ -7,6 +7,8 @@ import ProfileTabs, { ProfileTabType } from '@/components/profile/ProfileTabs';
 import PersonalInfoTab from '@/components/profile/PersonalInfoTab';
 import SecurityTab from '@/components/profile/SecurityTab';
 import PreferencesTab from '@/components/profile/PreferencesTab';
+import PaymentHistoryTab from '@/components/profile/PaymentHistoryTab';
+import CertificatesTab from '@/components/profile/CertificatesTab';
 import LogoutButton from '@/components/profile/LogoutButton';
 import SEO from '@/components/ui/SEO';
 import authService, { UserResponse } from '@/services/authService';
@@ -69,9 +71,9 @@ const Profile: React.FC = () => {
                     <SecurityTab user={user} />
                   )}
 
-                  {activeTab === 'preferences' && (
-                    <PreferencesTab />
-                  )}
+                  {activeTab === 'preferences' && (<PreferencesTab />)}
+                  {activeTab === 'payments' && (<PaymentHistoryTab userId={user.id} />)}
+                  {activeTab === 'certificates' && (<CertificatesTab />)}
 
                   <LogoutButton onLogout={handleLogout} />
                 </>

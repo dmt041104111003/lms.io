@@ -78,6 +78,37 @@ export const authService = {
     });
   },
 
+  async updateMyName(fullName: string): Promise<UserResponse> {
+    return apiRequest<UserResponse>('/api/users/me/name', {
+      method: 'PUT',
+      body: JSON.stringify({ fullName }),
+    });
+  },
+
+  async changeMyPassword(params: { currentPassword: string; newPassword: string }): Promise<string> {
+    return apiRequest<string>('/api/users/me/password', {
+      method: 'PUT',
+      body: JSON.stringify({
+        currentPassword: params.currentPassword,
+        newPassword: params.newPassword,
+      }),
+    });
+  },
+
+  async forgotPassword(email: string): Promise<string> {
+    return apiRequest<string>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async resetPassword(params: { email: string; code: string; newPassword: string }): Promise<string> {
+    return apiRequest<string>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email: params.email, code: params.code, newPassword: params.newPassword }),
+    });
+  },
+
   async generateNonce(address: string): Promise<{ nonce: string }> {
     return apiRequest<{ nonce: string }>('/api/nonce', {
       method: 'POST',

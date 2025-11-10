@@ -1,5 +1,5 @@
 import React from 'react';
-import { CourseCreationRequest, TagResponse } from '@/services/instructorService';
+import { CourseCreationRequest, TagResponse, PaymentOptionRequest } from '@/services/instructorService';
 import VideoPreview from './VideoPreview';
 
 interface CourseFormFieldsProps {
@@ -11,6 +11,8 @@ interface CourseFormFieldsProps {
   tags?: TagResponse[];
   selectedTagIds?: number[];
   onTagsChange?: (tagIds: number[]) => void;
+  paymentMethods?: PaymentOptionRequest[];
+  onPaymentMethodsChange?: (methods: PaymentOptionRequest[]) => void;
 }
 
 const CourseFormFields: React.FC<CourseFormFieldsProps> = ({ 
@@ -21,7 +23,9 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
   onThumbnailSelect,
   tags = [],
   selectedTagIds = [],
-  onTagsChange
+  onTagsChange,
+  paymentMethods = [],
+  onPaymentMethodsChange,
 }) => {
   const handleTagChange = (tagId: number, checked: boolean) => {
     if (onTagsChange) {
@@ -49,6 +53,10 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
           placeholder="Enter course title"
         />
       </div>
+
+      
+
+      
 
       {/* Short Description */}
       <div>
@@ -113,6 +121,57 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
         </select>
       </div>
 
+      {/* Inline Payment Method (only for PAID) */}
+      {formData.courseType === 'PAID' && (
+        <div className="grid grid-cols-1 sm:grid-cols-6 gap-3">
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+            <select
+              value={(paymentMethods[0]?.paymentMethodId === 'STRIPE' || paymentMethods[0]?.paymentMethodId === 'PAYPAL')
+                ? 'CARDANO_WALLET'
+                : (paymentMethods[0]?.paymentMethodId || 'CARDANO_WALLET')}
+              onChange={(e) => {
+                const val = e.target.value;
+                const next = paymentMethods.length > 0
+                  ? [{ ...paymentMethods[0], paymentMethodId: val }]
+                  : [{ paymentMethodId: val, receiverAddress: '' }];
+                onPaymentMethodsChange && onPaymentMethodsChange(next);
+              }}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="CARDANO_WALLET">Cardano Wallet</option>
+              <option value="STRIPE" disabled>Stripe (disabled)</option>
+              <option value="PAYPAL" disabled>PayPal (disabled)</option>
+            </select>
+          </div>
+          <div className="sm:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Receiver Address</label>
+            <input
+              type="text"
+              value={paymentMethods[0]?.receiverAddress || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                const next = paymentMethods.length > 0
+                  ? [{ ...paymentMethods[0], receiverAddress: val }]
+                  : [{ paymentMethodId: 'CARDANO_WALLET', receiverAddress: val }];
+                onPaymentMethodsChange && onPaymentMethodsChange(next);
+              }}
+              placeholder="Enter address to receive payments"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="sm:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+            <input
+              type="text"
+              value={formData.currency || 'ADA'}
+              readOnly
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Price (only for PAID) */}
       {formData.courseType === 'PAID' && (
         <div>
@@ -125,13 +184,49 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
             value={formData.price}
             onChange={onChange}
             min="0"
-            step="0.01"
+            step="1"
             required={formData.courseType === 'PAID'}
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="0.00"
           />
         </div>
       )}
+
+      {/* Discount and End Time (only for PAID) */}
+      {formData.courseType === 'PAID' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Discount (%)
+            </label>
+            <input
+              type="number"
+              name="discount"
+              value={formData.discount ?? 0}
+              onChange={onChange}
+              min="0"
+              max="100"
+              step="1"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Discount End Time
+            </label>
+            <input
+              type="datetime-local"
+              name="discountEndTime"
+              value={formData.discountEndTime || ''}
+              onChange={onChange}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      )}
+
+      
 
       {/* Video URL */}
       <div>
@@ -170,9 +265,10 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
         {imagePreview && (
           <div className="mt-2">
             <img
+              key={imagePreview}
               src={imagePreview}
               alt="Preview"
-              className="w-32 h-32 object-cover rounded border border-gray-300"
+              className="w-48 h-48 object-cover rounded border border-gray-300"
             />
           </div>
         )}
@@ -210,8 +306,12 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
         )}
       </div>
 
-      {/* Draft Checkbox */}
-      <div className="flex items-center">
+{/* Draft Checkbox (align right) */}
+      <div className="flex items-center justify-end">
+        
+        <label htmlFor="draft" className="mr-2 text-sm text-gray-700">
+          Save as draft (unpublished) 
+        </label>
         <input
           id="draft"
           type="checkbox"
@@ -220,10 +320,8 @@ const CourseFormFields: React.FC<CourseFormFieldsProps> = ({
           onChange={onChange}
           className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
         />
-        <label htmlFor="draft" className="ml-2 text-sm text-gray-700">
-          Save as draft (unpublished)
-        </label>
       </div>
+      
     </>
   );
 };

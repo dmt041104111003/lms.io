@@ -19,11 +19,16 @@ const VideoPreview: React.FC<VideoPreviewProps> = ({ videoUrl, onThumbnailSelect
   const embedUrl = getYouTubeEmbedUrl(videoId);
   const thumbnailUrl = getYouTubeThumbnailUrl(videoId, 'maxres');
 
+  // Call onThumbnailSelect only once per videoId to avoid feedback loops/flicker
+  const lastIdRef = React.useRef<string | null>(null);
   React.useEffect(() => {
+    if (!videoId) return;
+    if (lastIdRef.current === videoId) return;
+    lastIdRef.current = videoId;
     if (onThumbnailSelect && thumbnailUrl) {
       onThumbnailSelect(thumbnailUrl);
     }
-  }, [videoId, onThumbnailSelect, thumbnailUrl]);
+  }, [videoId]);
 
   return (
     <div className="mt-3">

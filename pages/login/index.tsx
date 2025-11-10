@@ -13,17 +13,20 @@ import authService from '@/services/authService';
 const Login: React.FC = () => {
   const router = useRouter();
   const { toasts, removeToast, success, error } = useToast();
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (router.isReady) {
-      const { error: urlError, signup } = router.query;
+      const { error: urlError, signup, reset } = router.query;
       if (urlError === 'oauth_failed') {
         error('OAuth login failed. Please try again.');
       } else if (signup === 'success') {
         success('Account created successfully! Please login.');
+      } else if (reset === 'success') {
+        success('Password reset successfully! Please login.');
       }
       // Clean up URL params
-      if (urlError || signup) {
+      if (urlError || signup || reset) {
         router.replace('/login', undefined, { shallow: true });
       }
     }
@@ -31,6 +34,7 @@ const Login: React.FC = () => {
 
   const handleLogin = async (data: { email: string; password: string; rememberMe: boolean }) => {
     try {
+      setSubmitting(true);
       const response = await authService.login({
         email: data.email,
         password: data.password,
@@ -45,6 +49,8 @@ const Login: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
       error(errorMessage);
       console.error('Login error:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -62,7 +68,7 @@ const Login: React.FC = () => {
         <div className="min-h-screen lg:h-screen flex flex-col lg:overflow-hidden">
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 lg:overflow-hidden">
             <AuthLayout>
-              <LoginForm onSubmit={handleLogin} />
+              <LoginForm onSubmit={handleLogin} disabled={submitting} />
             </AuthLayout>
             <BrandingSection />
           </div>

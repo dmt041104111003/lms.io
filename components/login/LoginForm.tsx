@@ -10,9 +10,10 @@ import CardanoWalletButton from '@/components/wallet/CardanoWalletButton';
 
 interface LoginFormProps {
   onSubmit: (data: { email: string; password: string; rememberMe: boolean }) => void;
+  disabled?: boolean;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, disabled = false }) => {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,6 +47,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
           required
+          disabled={disabled}
         />
 
         <FormInput
@@ -60,6 +62,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
           required
+          disabled={disabled}
         />
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
@@ -69,16 +72,17 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
               className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              disabled={disabled}
             />
             <span className="ml-2 text-xs sm:text-sm text-gray-600">Remember me</span>
           </label>
-          <a href="#" className="text-xs sm:text-sm text-blue-600 hover:underline">
+          <Link href="/forgot-password" className="text-xs sm:text-sm text-blue-600 hover:underline">
             Forgot password?
-          </a>
+          </Link>
         </div>
 
         <div className="space-y-2 pt-1">
-          <FormButton type="submit" variant="primary">
+          <FormButton type="submit" variant="primary" disabled={disabled}>
             Sign in
           </FormButton>
         </div>

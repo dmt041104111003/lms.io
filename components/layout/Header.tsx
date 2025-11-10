@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FiMenu, FiX, FiSearch } from 'react-icons/fi';
+import { FiMenu, FiX } from 'react-icons/fi';
 import Logo from '@/components/ui/logo';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -9,20 +9,17 @@ const Header: React.FC = () => {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const displayName = user ? (user.fullName?.trim() || (user.email?.split('@')[0] || '')) : '';
   const initials = user?.fullName?.trim()
     ? user.fullName.trim().split(' ').filter(Boolean).slice(0, 2).map((part: string) => part[0]).join('').toUpperCase()
     : (user?.email?.[0]?.toUpperCase() || 'U');
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Handle search logic here
-      console.log('Search:', searchQuery);
-    }
-  };
+  
+
+  
+
+  
 
   const isActiveRoute = (path: string) => {
     return router.pathname === path || router.pathname.startsWith(path + '/');
@@ -42,19 +39,7 @@ const Header: React.FC = () => {
             />
           </Link>
 
-          {/* Search Bar - Desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl mx-4">
-            <div className="relative w-full">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search courses, instructors..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-            </div>
-          </form>
+          
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1 flex-shrink-0">
@@ -170,21 +155,7 @@ const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
-        <div className="md:hidden pb-3">
-          <form onSubmit={handleSearch} className="w-full">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search courses..."
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-            </div>
-          </form>
-        </div>
+        
       </div>
 
       {/* Mobile Navigation Menu */}

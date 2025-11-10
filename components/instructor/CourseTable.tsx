@@ -77,22 +77,7 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
       'Are you sure you want to unpublish this course? It will no longer be visible to users.',
       async () => {
         try {
-          const fullCourse = await instructorService.getCourseById(course.id);
-          const courseData = fullCourse as any;
-          
-          await instructorService.updateCourse(course.id, {
-            title: fullCourse.title || course.title,
-            description: fullCourse.description,
-            shortDescription: courseData.shortDescription,
-            requirement: courseData.requirement,
-            videoUrl: courseData.videoUrl,
-            draft: true,
-            price: fullCourse.price,
-            currency: courseData.currency,
-            discount: courseData.discount,
-            discountEndTime: courseData.discountEndTime,
-            courseType: fullCourse.courseType,
-          } as any);
+          await instructorService.unpublishCourse(course.id);
           success('Course unpublished successfully');
           if (onCourseUpdate) {
             onCourseUpdate(course.id, { draft: true });

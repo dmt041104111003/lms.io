@@ -34,6 +34,10 @@ interface TestSummary {
   passScore?: number;
   orderIndex: number;
 }
+interface Tag {
+  id: number;
+  name: string;
+}
 
 interface CourseDetail {
   id: string;
@@ -42,7 +46,16 @@ interface CourseDetail {
   imageUrl?: string;
   videoUrl?: string;
   price?: number;
+  discount?: number;
+  discountEndTime?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+  instructorId?: number;
+  instructorUserId?: string;
+  shortDescription?: string;
+  requirement?: string;
   courseType?: string;
+  courseTags?: Tag[];
   chapters?: ChapterSummary[];
   courseTests?: TestSummary[];
 }
@@ -56,6 +69,7 @@ const CourseDetailPage: React.FC = () => {
   const [isEnrolled, setIsEnrolled] = useState(false);
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [rawCourse, setRawCourse] = useState<any | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +87,7 @@ const CourseDetailPage: React.FC = () => {
         
         if (apiResponse.code === 1000 && apiResponse.result) {
           const result = apiResponse.result;
+          setRawCourse(result);
           const isDraftFlag =
             result.draft === true ||
             result.isDraft === true ||
@@ -91,7 +106,16 @@ const CourseDetailPage: React.FC = () => {
             imageUrl: result.imageUrl,
             videoUrl: result.videoUrl,
             price: result.price,
+            discount: result.discount,
+            discountEndTime: result.discountEndTime,
+            createdAt: result.createdAt,
+            updatedAt: result.updatedAt,
+            instructorId: result.instructorId,
+            instructorUserId: result.instructorUserId,
+            shortDescription: result.shortDescription,
+            requirement: result.requirement,
             courseType: result.courseType,
+            courseTags: result.courseTags,
             chapters: result.chapters || [],
             courseTests: result.courseTests || [],
           });
@@ -104,6 +128,7 @@ const CourseDetailPage: React.FC = () => {
         } else {
           // Fallback to basic course info
           const data = await instructorService.getCourseById(id);
+          setRawCourse(data);
           const isDraftFlag =
             (data as any).draft === true ||
             (data as any).isDraft === true ||
@@ -200,6 +225,9 @@ const CourseDetailPage: React.FC = () => {
               {/* Main content */}
               <div className="lg:col-span-2 space-y-4">
                 <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">{course.title}</h1>
+                {course.shortDescription && (
+                  <p className="text-gray-600 mb-4">{course.shortDescription}</p>
+                )}
                 {showPreview && previewUrl ? (
                   <div className="w-full overflow-hidden rounded-lg border border-gray-200">
                     <div className="w-full aspect-video bg-black">
@@ -230,23 +258,35 @@ const CourseDetailPage: React.FC = () => {
                     </div>
                   )
                 )}
+                
                 {course.description && (
-                  <div className="prose max-w-none">
+                  <div className="prose max-w-none ">
+                    <h2 className='text-xl font-semibold text-justify text-gray-900 mb-4'>What you'll learn</h2>
                     <p className="text-gray-700 whitespace-pre-line">{course.description}</p>
                   </div>
                 )}
-                {(course as any).courseTags || (course as any).tags ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((course as any).courseTags || (course as any).tags || []).map((tag: any) => (
-                      <span
-                        key={tag.id || tag.tagId}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all"
-                      >
-                        <FiTag size={12} className="text-gray-600" />
-                        {tag.name || tag.tagName}
-                      </span>
-                    ))}
+                {course.requirement && (
+                  <div className="prose max-w-none">
+                    <h2 className='text-xl font-semibold text-gray-900 mb-4'>Requirements</h2>
+                    <p className="text-gray-700 whitespace-pre-line">{course.requirement}</p>
                   </div>
+                )}
+                {(course as any).courseTags || (course as any).tags ? (
+                  <>
+                    <h2 className='text-xl font-semibold text-justify text-gray-900 mb-4'>Explore related topics</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {((course as any).courseTags || (course as any).tags || []).map((tag: any) => (
+                        <span
+                          key={tag.id || tag.tagId}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all"
+                        >
+                          {/* <FiTag size={12} className="text-gray-600" /> */}
+                          {tag.name || tag.tagName}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                  
                 ) : null}
 
                 {/* Chapters */}
@@ -347,6 +387,15 @@ const CourseDetailPage: React.FC = () => {
                     </div>
                   </Card>
                 )}
+
+                {rawCourse && (
+                  <Card className="p-6 mt-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Backend Data</h2>
+                    <pre className="text-xs whitespace-pre-wrap break-words bg-gray-50 border border-gray-200 rounded p-3 overflow-x-auto">
+{JSON.stringify(rawCourse, null, 2)}
+                    </pre>
+                  </Card>
+                )}
               </div>
 
               {/* Sidebar */}
@@ -371,29 +420,48 @@ const CourseDetailPage: React.FC = () => {
                                 await instructorService.enrollCourse({ userId: user.id, courseId: String(course.id) });
                                 try {
                                   const recentRaw = localStorage.getItem('my_courses_recent');
-                                  const recent: Array<{ id: string; title: string; imageUrl?: string }> = recentRaw ? JSON.parse(recentRaw) : [];
-                                  const updated = [{ id: String(course.id), title: course.title, imageUrl: course.imageUrl }, ...recent.filter(c => c.id !== String(course.id))].slice(0, 20);
+                                  const recent: Array<{ id: string; title: string; imageUrl?: string; accessedAt?: string }> = recentRaw ? JSON.parse(recentRaw) : [];
+                                  const nowIso = new Date().toISOString();
+                                  const updated = [
+                                    { id: String(course.id), title: course.title, imageUrl: course.imageUrl, accessedAt: nowIso },
+                                    ...recent.filter(c => c.id !== String(course.id))
+                                  ].slice(0, 20);
                                   localStorage.setItem('my_courses_recent', JSON.stringify(updated));
                                 } catch {}
                                 setIsEnrolled(true);
                                 success('Enrolled successfully!');
                                 setTimeout(() => router.push('/my-courses'), 1200);
-                              } catch (e) {
-                                try {
-                                  const recentRaw = localStorage.getItem('my_courses_recent');
-                                  const recent: Array<{ id: string; title: string; imageUrl?: string }> = recentRaw ? JSON.parse(recentRaw) : [];
-                                  const updated = [{ id: String(course.id), title: course.title, imageUrl: course.imageUrl }, ...recent.filter(c => c.id !== String(course.id))].slice(0, 20);
-                                  localStorage.setItem('my_courses_recent', JSON.stringify(updated));
-                                } catch {}
-                                setIsEnrolled(true);
-                                success('Enrolled successfully!');
-                                setTimeout(() => router.push('/my-courses'), 1200);
-                                return;
+                              } catch (e: any) {
+                                showError(e?.message || 'Failed to enroll');
                               } finally {
                                 setEnrolling(false);
                               }
                             } else {
-                              router.push(`/checkout/${course.id}`);
+                              if (!user?.id) {
+                                router.push('/login');
+                                return;
+                              }
+                              try {
+                                setEnrolling(true);
+                                await instructorService.enrollCourse({ userId: user.id, courseId: String(course.id) });
+                                try {
+                                  const recentRaw = localStorage.getItem('my_courses_recent');
+                                  const recent: Array<{ id: string; title: string; imageUrl?: string; accessedAt?: string }> = recentRaw ? JSON.parse(recentRaw) : [];
+                                  const nowIso = new Date().toISOString();
+                                  const updated = [
+                                    { id: String(course.id), title: course.title, imageUrl: course.imageUrl, accessedAt: nowIso },
+                                    ...recent.filter(c => c.id !== String(course.id))
+                                  ].slice(0, 20);
+                                  localStorage.setItem('my_courses_recent', JSON.stringify(updated));
+                                } catch {}
+                                setIsEnrolled(true);
+                                success('Enrolled successfully!');
+                                setTimeout(() => router.push('/my-courses'), 1200);
+                              } catch (e: any) {
+                                showError(e?.message || 'Failed to enroll');
+                              } finally {
+                                setEnrolling(false);
+                              }
                             }
                           }}
                         >
@@ -418,7 +486,9 @@ const CourseDetailPage: React.FC = () => {
                       </button>
                     </div>
                   </div>
+                
                 </div>
+                
               </div>
             </div>
           </div>
@@ -427,8 +497,7 @@ const CourseDetailPage: React.FC = () => {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </>
   );
-};
+}
+;
 
 export default CourseDetailPage;
-
-

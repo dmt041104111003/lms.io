@@ -8,6 +8,7 @@ import ToastContainer from '@/components/ui/ToastContainer';
 import SEO from '@/components/ui/SEO';
 import { useToast } from '@/hooks/useToast';
 import authService from '@/services/authService';
+import AvatarSpinnerOverlay from '@/components/ui/AvatarSpinnerOverlay';
 
 const VerifyEmail: React.FC = () => {
   const router = useRouter();
@@ -130,6 +131,7 @@ const VerifyEmail: React.FC = () => {
           </div>
         </div>
         <ToastContainer toasts={toasts} onRemove={removeToast} />
+        {(loading || resending) && <AvatarSpinnerOverlay visible />}
       </Layout>
     </GuestGuard>
   );

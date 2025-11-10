@@ -8,6 +8,7 @@ interface HeroSlide {
   subtitle: string;
   backgroundImage?: string;
   gradientDirection?: 'left' | 'right' | 'top' | 'bottom';
+  link?: string;
 }
 
 interface HeroSliderProps {
@@ -67,6 +68,16 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
     };
   }, [isPlaying, slides.length, autoPlayInterval]);
 
+  useEffect(() => {
+    if (slides.length === 0) {
+      if (currentIndex !== 0) setCurrentIndex(0);
+      return;
+    }
+    if (currentIndex >= slides.length) {
+      setCurrentIndex(0);
+    }
+  }, [slides.length]);
+
   const nextSlide = () => {
     goToSlide((currentIndex + 1) % slides.length, 1);
   };
@@ -104,13 +115,24 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
     scale: { duration: 0.4 },
   };
 
+  const safeIndex = slides.length > 0 ? Math.min(currentIndex, slides.length - 1) : 0;
+
+  // Placeholder when no slides available
+  if (!slides || slides.length === 0) {
+    return (
+      <div className="relative w-full mb-6 sm:mb-8 md:mb-12 overflow-hidden">
+        <div className="relative min-h-[150px] sm:min-h-[200px] md:min-h-[250px] rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden border border-gray-200 bg-white" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full mb-6 sm:mb-8 md:mb-12 overflow-hidden">
       {/* Slides Container */}
       <div className="relative min-h-[150px] sm:min-h-[200px] md:min-h-[250px] rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden border border-gray-200">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
-            key={currentIndex}
+            key={safeIndex}
             custom={direction}
             variants={slideVariants}
             initial="enter"
@@ -119,17 +141,17 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
             transition={transition}
             className="absolute inset-0 p-4 sm:p-6 md:p-8 lg:p-10"
             style={{
-              backgroundImage: slides[currentIndex].backgroundImage 
-                ? `url(${slides[currentIndex].backgroundImage})` 
+              backgroundImage: slides[safeIndex].backgroundImage 
+                ? `url(${slides[safeIndex].backgroundImage})` 
                 : undefined,
-              backgroundColor: slides[currentIndex].backgroundImage ? undefined : 'white',
+              backgroundColor: slides[safeIndex].backgroundImage ? undefined : 'white',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
             }}
           >
             {/* Gradient Overlay */}
-            {slides[currentIndex].backgroundImage && (
+            {slides[safeIndex].backgroundImage && (
               <motion.div 
                 className="absolute inset-0 pointer-events-none"
                 initial={{ opacity: 0 }}
@@ -137,11 +159,11 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
                 style={{
-                  background: slides[currentIndex].gradientDirection === 'right' 
+                  background: slides[safeIndex].gradientDirection === 'right' 
                     ? 'linear-gradient(to right, transparent 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,1) 100%)'
-                    : slides[currentIndex].gradientDirection === 'top'
+                    : slides[safeIndex].gradientDirection === 'top'
                     ? 'linear-gradient(to top, transparent 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,1) 100%)'
-                    : slides[currentIndex].gradientDirection === 'bottom'
+                    : slides[safeIndex].gradientDirection === 'bottom'
                     ? 'linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,1) 100%)'
                     : 'linear-gradient(to left, transparent 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,1) 100%)',
                 }}
@@ -157,13 +179,24 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
             >
               {/* Title */}
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-normal text-gray-900 mb-2 sm:mb-3 md:mb-4 leading-tight">
-                {slides[currentIndex].title}
+                {slides[safeIndex].title}
               </h1>
 
               {/* Subtitle/Description */}
               <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 text-justify pr-2 sm:pr-4 md:pr-6 lg:pr-8 leading-relaxed">
-                {slides[currentIndex].subtitle}
+                {slides[safeIndex].subtitle}
               </p>
+              {slides[safeIndex].link && (
+                <a
+                  href={slides[safeIndex].link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center mt-3 sm:mt-4 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs sm:text-sm transition"
+                >
+                  Explore
+                  <FiChevronRight className="ml-1" size={14} />
+                </a>
+              )}
             </motion.div>
           </motion.div>
         </AnimatePresence>

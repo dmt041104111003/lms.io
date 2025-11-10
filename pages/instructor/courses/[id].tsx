@@ -40,6 +40,8 @@ interface CourseDetail {
   id: string;
   title: string;
   description?: string;
+  shortDescription?: string;
+  requirement?: string;
   imageUrl?: string;
   videoUrl?: string;
   price?: number;
