@@ -13,9 +13,17 @@ import ToastContainer from '@/components/ui/ToastContainer';
 const InstructorDashboard: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const { toasts, removeToast, error: showError } = useToast();
+  const { toasts, removeToast, success, error: showError } = useToast();
   const [dashboardData, setDashboardData] = useState<CourseDashboardResponse[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<CourseDashboardResponse | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editExpertise, setEditExpertise] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [editLinks, setEditLinks] = useState<Array<{ id?: number; name: string; url: string }>>([]);
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [instructorId, setInstructorId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -120,6 +128,31 @@ const InstructorDashboard: React.FC = () => {
                 size="sm"
               >
                 Manage Courses
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!user?.id) return;
+                  try {
+                    const profile = await instructorService.getInstructorProfileByUserId(user.id);
+                    if (!profile?.id) {
+                      showError('No instructor profile found');
+                      return;
+                    }
+                    setInstructorId(profile.id as any);
+                    setEditName(profile.name || '');
+                    setEditExpertise(profile.expertise || '');
+                    setEditBio(profile.bio || '');
+                    setEditLinks((profile.socialLinks || []).map(l => ({ id: l.id as any, name: l.name || (l as any).platform || '', url: l.url })));
+                    setEditAvatarFile(null);
+                    setEditOpen(true);
+                  } catch (e: any) {
+                    showError(e?.message || 'Failed to load instructor profile');
+                  }
+                }}
+                variant="outline"
+                size="sm"
+              >
+                Edit Profile
               </Button>
               <Button
                 onClick={() => router.push('/instructor/courses/create')}
@@ -237,6 +270,95 @@ const InstructorDashboard: React.FC = () => {
                     View Full Details
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {editOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center" onClick={() => !savingProfile && setEditOpen(false)}>
+            <div className="bg-white rounded-lg w-full max-w-lg mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+              <div className="text-lg font-semibold text-gray-900 mb-4">Edit Instructor Profile</div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Name</label>
+                  <input value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Expertise</label>
+                  <input value={editExpertise} onChange={(e) => setEditExpertise(e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Bio</label>
+                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm min-h-[100px]" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Avatar</label>
+                  <input type="file" accept="image/*" onChange={(e) => setEditAvatarFile(e.target.files?.[0] || null)} className="block w-full text-sm" />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm text-gray-700">Social Links</label>
+                    <button
+                      className="text-sm text-blue-600 hover:underline"
+                      onClick={() => setEditLinks([...editLinks, { name: '', url: '' }])}
+                    >
+                      Add link
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {editLinks.map((l, idx) => (
+                      <div key={idx} className="grid grid-cols-5 gap-2">
+                        <input
+                          placeholder="Name"
+                          value={l.name}
+                          onChange={(e) => setEditLinks(editLinks.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
+                          className="col-span-2 border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                        <input
+                          placeholder="URL"
+                          value={l.url}
+                          onChange={(e) => setEditLinks(editLinks.map((x, i) => i === idx ? { ...x, url: e.target.value } : x))}
+                          className="col-span-3 border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-5">
+                <button
+                  className="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={() => !savingProfile && setEditOpen(false)}
+                  disabled={savingProfile}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  onClick={async () => {
+                    if (!instructorId) return;
+                    try {
+                      setSavingProfile(true);
+                      const payload: any = {
+                        name: editName || undefined,
+                        expertise: editExpertise || undefined,
+                        bio: editBio || undefined,
+                        socialLinks: editLinks.filter(x => x.name && x.url).map(x => ({ name: x.name, url: x.url })),
+                      };
+                      await instructorService.updateInstructorProfile(instructorId as any, payload, editAvatarFile || undefined);
+                      setEditOpen(false);
+                      success('Profile updated');
+                    } catch (e: any) {
+                      showError(e?.message || 'Failed to update profile');
+                    } finally {
+                      setSavingProfile(false);
+                    }
+                  }}
+                  disabled={savingProfile}
+                >
+                  {savingProfile ? 'Saving...' : 'Save'}
+                </button>
               </div>
             </div>
           </div>

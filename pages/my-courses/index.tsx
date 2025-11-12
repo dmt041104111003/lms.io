@@ -4,12 +4,22 @@ import SEO from '@/components/ui/SEO';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import progressService, { ProgressResponse } from '@/services/progressService';
+import feedbackService from '@/services/feedbackService';
+import { useToast } from '@/hooks/useToast';
+import ToastContainer from '@/components/ui/ToastContainer';
 
 const MyCoursesPage: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const { toasts, removeToast, success: toastSuccess, error: toastError } = useToast();
   const [recentLocal, setRecentLocal] = useState<Array<{ id: string; title: string; imageUrl?: string; accessedAt?: string }>>([]);
   const [progresses, setProgresses] = useState<ProgressResponse[]>([]);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackCourse, setFeedbackCourse] = useState<{ id: string; title?: string } | null>(null);
+  const [rate, setRate] = useState<number>(5);
+  const [content, setContent] = useState<string>('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [alreadyFeedbackSet, setAlreadyFeedbackSet] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
@@ -35,6 +45,36 @@ const MyCoursesPage: React.FC = () => {
     };
     load();
   }, [user]);
+
+  const openFeedback = (course: { id: string; title?: string }) => {
+    if (alreadyFeedbackSet.has(course.id)) {
+      toastError('You already submitted feedback for this course.');
+      return;
+    }
+    setFeedbackCourse({ id: course.id, title: course.title });
+    setRate(5);
+    setContent('');
+    setFeedbackOpen(true);
+  };
+
+  const submitFeedback = async () => {
+    if (!feedbackCourse?.id) return;
+    try {
+      setSubmitting(true);
+      const res = await feedbackService.addWithMessage(feedbackCourse.id, { rate, content });
+      setFeedbackOpen(false);
+      setAlreadyFeedbackSet(prev => new Set(prev).add(feedbackCourse.id));
+      toastSuccess(res.message || 'Feedback submitted');
+    } catch (e: any) {
+      const msg = e?.message || 'Failed to submit feedback';
+      if ((msg + '').toLowerCase().includes('already')) {
+        setAlreadyFeedbackSet(prev => new Set(prev).add(feedbackCourse.id));
+      }
+      toastError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const computeTotalItems = (p: ProgressResponse) => {
     const chapterItems = (p.chapters || []).reduce((acc, ch) => acc + (ch.lectures?.length || 0) + (ch.tests?.length || 0), 0);
@@ -148,15 +188,20 @@ const MyCoursesPage: React.FC = () => {
                                 <div className="flex-1 min-w-0 ">
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                      <div className="text-base font-semibold text-gray-900 truncate mb-2">{p.title}</div>
+                                      <div className="flex items-center gap-3">
+                                        <div className="text-base font-semibold text-gray-900 truncate mb-2">{p.title}</div>
+                                      
+                                      </div>
                                       <div className="text-xs text-gray-500">{done}/{total} completed</div>
                                     </div>
-                                    <button
-                                      className="text-sm text-blue-600 hover:underline whitespace-nowrap"
-                                      onClick={() => openCourseAndTouchRecent({ id: p.id, title: p.title as any, imageUrl: p.imageUrl })}
-                                    >
-                                      Go to course
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                      <button
+                                        className="text-sm text-blue-600 hover:underline whitespace-nowrap"
+                                        onClick={() => openCourseAndTouchRecent({ id: p.id, title: p.title as any, imageUrl: p.imageUrl })}
+                                      >
+                                        Go to course
+                                      </button>
+                                    </div>
                                   </div>
                                   <div className="mt-3">
                                     <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -164,23 +209,81 @@ const MyCoursesPage: React.FC = () => {
                                     </div>
                                     <div className="text-xs text-gray-600 mt-1">{percent}%</div>
                                   </div>
+                                <div className='flex justify-end'>
+                                  <button
+                                    className={`text-sm whitespace-nowrap ${alreadyFeedbackSet.has(p.id) ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:underline'}`}
+                                    onClick={() => openFeedback({ id: p.id, title: p.title as any })}
+                                    disabled={alreadyFeedbackSet.has(p.id)}
+                                    title={alreadyFeedbackSet.has(p.id) ? 'You already submitted feedback' : 'Leave feedback'}
+                                  >
+                                    Feedback
+                                  </button>
                                 </div>
                               </div>
                             </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
               </div>
             )}
           </div>
         </div>
       </Layout>
+
+      {feedbackOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Feedback {feedbackCourse?.title ? `for ${feedbackCourse.title}` : ''}</h3>
+              <button className="text-gray-500 hover:text-gray-700" onClick={() => setFeedbackOpen(false)}>✕</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rating (1-5)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={rate}
+                  onChange={e => setRate(Number(e.target.value))}
+                  className="w-full border rounded px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+                <textarea
+                  rows={4}
+                  value={content}
+                  onChange={e => setContent(e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="What did you think about the course?"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button className="px-4 py-2 rounded border" onClick={() => setFeedbackOpen(false)} disabled={submitting}>Cancel</button>
+                <button
+                  className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-60"
+                  onClick={submitFeedback}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Submitting...' : 'Submit'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toasts */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </>
   );
-};
+}
+;
 
 export default MyCoursesPage;
 

@@ -7,7 +7,8 @@ import instructorService, { CourseResponse, InstructorProfileResponse } from '@/
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import ToastContainer from '@/components/ui/ToastContainer';
-import { FiTag, FiClock, FiBookOpen, FiCheckSquare, FiCalendar, FiRefreshCw } from 'react-icons/fi';
+import { FiTag, FiClock, FiBookOpen, FiCheckSquare, FiCalendar, FiRefreshCw, FiChevronDown, FiPlayCircle, FiFileText } from 'react-icons/fi';
+import feedbackService, { FeedbackItem } from '@/services/feedbackService';
 
 interface ChapterSummary {
   id: number;
@@ -73,8 +74,20 @@ const CourseDetailPage: React.FC = () => {
   const [rawCourse, setRawCourse] = useState<any | null>(null);
   
   const [instructor, setInstructor] = useState<InstructorProfileResponse | null>(null);
+  const [instructorCourses, setInstructorCourses] = useState<CourseResponse[]>([]);
+  const [morePage, setMorePage] = useState(0);
+  const [moreTotalPages, setMoreTotalPages] = useState(1);
+  const [visibleMoreCount, setVisibleMoreCount] = useState(2);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [openChapters, setOpenChapters] = useState<Record<number, boolean>>({});
   
   const [error, setError] = useState<string | null>(null);
+  const [fbLoading, setFbLoading] = useState(false);
+  const [fbPageIndex, setFbPageIndex] = useState(0);
+  const fbPageSize = 6;
+  const [fbContent, setFbContent] = useState<FeedbackItem[]>([]);
+  const [fbTotalPages, setFbTotalPages] = useState(0);
+  const [fbTotalElements, setFbTotalElements] = useState(0);
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
@@ -89,6 +102,7 @@ const CourseDetailPage: React.FC = () => {
         
         if (apiResponse.code === 1000 && apiResponse.result) {
           const result = apiResponse.result;
+          console.log('[CourseDetail] API /api/course/:id result', result);
           setRawCourse(result);
           const isDraftFlag =
             result.draft === true ||
@@ -131,6 +145,7 @@ const CourseDetailPage: React.FC = () => {
         } else {
           // Fallback to basic course info
           const data = await instructorService.getCourseById(id);
+          console.log('[CourseDetail] Fallback getCourseById result', data);
           setRawCourse(data);
           const isDraftFlag =
             (data as any).draft === true ||
@@ -175,17 +190,73 @@ const CourseDetailPage: React.FC = () => {
       try {
         if (course.instructorId) {
           const data = await instructorService.getInstructorProfileById(course.instructorId);
+          console.log('[CourseDetail] Instructor profile by id', data);
           setInstructor(data);
           return;
         }
         if (course.instructorUserId) {
           const data = await instructorService.getInstructorProfileByUserId(course.instructorUserId);
+          console.log('[CourseDetail] Instructor profile by userId', data);
           setInstructor(data);
         }
       } catch {}
     };
     load();
   }, [course]);
+
+  useEffect(() => {
+    const fetchMoreCourses = async () => {
+      try {
+        if (!instructor?.id) {
+          setInstructorCourses([]);
+          return;
+        }
+        const res = await instructorService.getCoursesByProfile(instructor.id, 0, 6);
+        console.log('[CourseDetail] Instructor courses (page 0)', res);
+        setInstructorCourses(res.content || []);
+        setMorePage(res.number ?? 0);
+        setMoreTotalPages(res.totalPages ?? 1);
+        setVisibleMoreCount(2);
+      } catch {
+        setInstructorCourses([]);
+      }
+    };
+    fetchMoreCourses();
+  }, [instructor?.id]);
+
+  useEffect(() => {
+    const loadFeedback = async () => {
+      if (!course?.id) return;
+      try {
+        setFbLoading(true);
+        const res = await feedbackService.getByCoursePaged(String(course.id), fbPageIndex, fbPageSize);
+        setFbContent(prev => fbPageIndex === 0 ? (res.content || []) : [...prev, ...(res.content || [])]);
+        setFbTotalPages(res.totalPages || 0);
+        setFbTotalElements(res.totalElements || 0);
+      } finally {
+        setFbLoading(false);
+      }
+    };
+    loadFeedback();
+  }, [course?.id, fbPageIndex]);
+
+  const loadMoreCourses = async () => {
+    if (!instructor?.id) return;
+    if (loadingMore) return;
+    const hasMorePages = morePage < moreTotalPages - 1;
+    if (!hasMorePages) return;
+    try {
+      setLoadingMore(true);
+      const nextPage = morePage + 1;
+      const res = await instructorService.getCoursesByProfile(instructor.id, nextPage, 6);
+      setInstructorCourses(prev => [...prev, ...(res.content || [])]);
+      setMorePage(res.number ?? nextPage);
+      setMoreTotalPages(res.totalPages ?? moreTotalPages);
+      setVisibleMoreCount(prev => prev + 4);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   if (error) {
     return (
@@ -246,7 +317,7 @@ const CourseDetailPage: React.FC = () => {
     (course.chapters || []).forEach((ch) => {
       const lecs = ch.lectures || [];
       lectureCount += lecs.length;
-      lecs.forEach((l) => { lectureSeconds += l.duration || 0; });
+      lecs.forEach((l: any) => { lectureSeconds += (l.duration ?? l.time ?? 0); });
       const tests = ch.tests || [];
       testCount += tests.length;
       tests.forEach((t) => { testSeconds += (t.durationMinutes || 0) * 60; });
@@ -273,12 +344,35 @@ const CourseDetailPage: React.FC = () => {
     return h > 0 ? `${h}h ${m}m` : `${m} min`;
   };
 
+  const formatClock = (secs?: number) => {
+    if (!secs || secs <= 0) return '00:00';
+    const s = Math.floor(secs % 60);
+    const totalMins = Math.floor(secs / 60);
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  };
+
   const formatDateTime = (d?: Date) => {
     if (!d) return '-';
     const dt = new Date(d as any);
     if (isNaN(dt.getTime())) return '-';
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)}/${dt.getFullYear()} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  };
+
+  const formatTimeAgo = (iso?: string) => {
+    if (!iso) return '';
+    const t = new Date(iso).getTime();
+    const diff = Math.max(0, Date.now() - t);
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+    if (diff < minute) return 'Just now';
+    if (diff < hour) return `${Math.floor(diff / minute)} min ago`;
+    if (diff < day) return `${Math.floor(diff / hour)} hours ago`;
+    return `${Math.floor(diff / day)} days ago`;
   };
 
   const formatPrice = (amount: number, currency?: string) => {
@@ -364,47 +458,262 @@ const CourseDetailPage: React.FC = () => {
                 )}
                 
                 {course.description && (
-                  <div className="prose max-w-none ">
-                    <h2 className='text-xl font-semibold text-justify text-gray-900 mb-4'>What you'll learn</h2>
+                  <div className="prose max-w-none mb-6">
+                    <h2 className='text-xl  mt-12 font-semibold text-justify text-gray-900 mb-4'>What you'll learn</h2>
                     <p className="text-gray-700 whitespace-pre-line">{course.description}</p>
                   </div>
                 )}
                 {course.requirement && (
-                  <div className="prose max-w-none">
-                    <h2 className='text-xl font-semibold text-gray-900 mb-4'>Requirements</h2>
+                  <div className="prose max-w-none ">
+                    <h2 className='text-xl mt-8 font-semibold text-gray-900 mb-4'>Requirements</h2>
                     <p className="text-gray-700 whitespace-pre-line">{course.requirement}</p>
                   </div>
                 )}
-                {(course as any).courseTags || (course as any).tags ? (
-                  <>
-                    <h2 className='text-xl font-semibold text-justify text-gray-900 mb-4'>Explore related topics</h2>
+                {course.chapters && course.chapters.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h2 className="text-xl mt-8 font-semibold text-gray-900">Course content</h2>
+                      <div className="mt-8">
+                        <button
+                          className="text-sm text-blue-600 hover:underline mr-3"
+                          onClick={() => {
+                            const all: Record<number, boolean> = {};
+                            (course.chapters || []).forEach((c: any) => { all[c.id] = true; });
+                            setOpenChapters(all);
+                          }}
+                        >
+                          Expand all
+                        </button>
+                        <button
+                          className="text-sm text-blue-600 hover:underline"
+                          onClick={() => setOpenChapters({})}
+                        >
+                          Collapse all
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {stats && (
+                        <div className="text-sm text-gray-600 mb-1 flex flex-wrap items-center gap-4">
+                          <span className="inline-flex items-center gap-1">
+                            <FiBookOpen /> {stats.lectureCount} lectures • {Math.floor(stats.lectureSeconds / 60)} min
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <FiCheckSquare /> {stats.testCount} tests • {Math.floor(stats.testSeconds / 60)} min
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <FiClock /> Total {formatDuration(stats.totalSeconds)}
+                          </span>
+                        </div>
+                      )}
+                      {course.chapters
+                        .slice()
+                        .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+                        .map((ch, chIndex) => {
+                          const lectureCount = (ch.lectures || []).length;
+                          const totalSecs = (ch.lectures || []).reduce((s, l: any) => s + Number((l.duration ?? l.time ?? 0)), 0);
+                          const isOpen = openChapters[ch.id as number] ?? (chIndex === 0);
+                          return (
+                            <div key={ch.id} className="border border-gray-200 rounded-md overflow-hidden">
+                              <button
+                                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-gray-900 font-medium"
+                                onClick={() => setOpenChapters(prev => ({ ...prev, [ch.id]: !(prev[ch.id as number] ?? (chIndex === 0)) }))}
+                              >
+                                <span className="truncate text-left">{ch.title}</span>
+                                <span className="flex items-center gap-3 text-sm font-normal text-gray-700">
+                                  <span>{lectureCount} lectures • {formatDuration(totalSecs)}</span>
+                                  <FiChevronDown className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                                </span>
+                              </button>
+                              {isOpen && (
+                                <div className="px-4 py-3 space-y-3">
+                                  {(ch.lectures && ch.lectures.length > 0) && (
+                                    <div className="space-y-1">
+                                      {ch.lectures
+                                        .slice()
+                                        .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+                                        .map((lec, idx) => (
+                                          <div key={lec.id || idx} className="flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50 transition">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                              {lec.videoUrl ? (
+                                                <FiPlayCircle className="text-gray-600 flex-shrink-0" size={16} />
+                                              ) : (
+                                                <FiFileText className="text-gray-600 flex-shrink-0" size={16} />
+                                              )}
+                                              <span className="text-sm text-gray-900 truncate">{idx + 1}. {lec.title}</span>
+                                            </div>
+                                            <div className="flex items-center gap-4 flex-shrink-0">
+                                              {lec.previewFree && lec.videoUrl && (
+                                                <a
+                                                  href={lec.videoUrl}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                                                >
+                                                  <FiPlayCircle size={14} />
+                                                  Preview
+                                                </a>
+                                              )}
+                                              {Number((lec as any).duration ?? (lec as any).time ?? 0) > 0 && (
+                                                <span className="text-xs text-gray-600">{formatClock(Number((lec as any).duration ?? (lec as any).time ?? 0))}</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  )}
+                                  {(ch.tests && ch.tests.length > 0) && (
+                                    <div>
+                                      <div className="space-y-2">
+                                        {ch.tests
+                                          .slice()
+                                          .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+                                          .map((test) => (
+                                            <div key={test.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                              <div className="flex items-center gap-3 flex-1">
+                                                <FiCheckSquare className="text-gray-700" size={16} />
+                                                <div className="flex-1">
+                                                  <div className="text-sm font-medium text-gray-900">{test.title}</div>
+                                                  {test.passScore && (
+                                                    <div className="text-xs text-gray-600 mt-1">Pass Score: {test.passScore}%</div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              {typeof test.durationMinutes === 'number' && test.durationMinutes > 0 && (
+                                                <span className="text-xs text-gray-600">{test.durationMinutes} min</span>
+                                              )}
+                                            </div>
+                                          ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+                {course.courseTests && (
+                  <div className="mb-6">
+                    <h2 className="text-xl mt-8  font-semibold text-gray-900 mb-4">Course Tests</h2>
+                    {course.courseTests.length > 0 && (
+                      <Card className="p-6">
+                        <div className="space-y-2">
+                          {course.courseTests
+                            .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
+                            .map((test) => (
+                              <div key={test.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                <div className="flex items-center gap-3 flex-1">
+                                  <FiCheckSquare className="text-gray-700" size={16} />
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-900">{test.title}</div>
+                                    {test.passScore && (
+                                      <div className="text-xs text-gray-600 mt-1">Pass Score: {test.passScore}%</div>
+                                    )}
+                                  </div>
+                                </div>
+                                {typeof test.durationMinutes === 'number' && test.durationMinutes > 0 && (
+                                  <span className="text-xs text-gray-600">{test.durationMinutes} min</span>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                  {(course as any).courseTags || (course as any).tags ? (
+                  <div className=" mb-6">
+                    <h2 className='text-xl mt-8 font-semibold text-justify text-gray-900 mb-4'>Explore related topics</h2>
                     <div className="flex flex-wrap gap-2">
                       {((course as any).courseTags || (course as any).tags || []).map((tag: any) => (
                         <span
                           key={tag.id || tag.tagId}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-gray-700 bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all"
                         >
-                          {/* <FiTag size={12} className="text-gray-600" /> */}
                           {tag.name || tag.tagName}
                         </span>
                       ))}
                     </div>
-                  </>
-                ) : null}
+                  </div>
+              ) : null}
 
-                {instructor && (
-                  <Card className="p-6 mt-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Instructor</h2>
+              {/* Feedback Section */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-xl mt-8 font-semibold text-gray-900">Student feedback</h2>
+                  {/* {fbTotalElements > 0 && (
+                    <div className="text-sm text-gray-600">{fbTotalElements} ratings</div>
+                  )} */}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(fbLoading ? Array.from({ length: 4 }) : fbContent).map((f: any, idx: number) => (
+                    <div key={f?.id ?? idx} className="border border-gray-200 rounded-lg p-4 bg-white">
+                      {f ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {f.avatar ? (
+                                <img
+                                  src={f.avatar}
+                                  alt={f.fullName || 'User'}
+                                  className="w-9 h-9 rounded-full object-cover border"
+                                />
+                              ) : (
+                                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-700">
+                                  {(f.fullName || '?').slice(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{f.fullName || 'User'}</div>
+                                <div className="text-xs text-gray-500">{formatTimeAgo(f.createdAt)}</div>
+                              </div>
+                            </div>
+                            <div className="text-yellow-500 text-sm">{'★'.repeat(Math.max(0, Math.min(5, Number(f.rate) || 0)))}{'☆'.repeat(Math.max(0, 5 - (Number(f.rate) || 0)))}</div>
+                          </div>
+                          {f.content && (
+                            <div className="text-sm text-gray-800 whitespace-pre-line">{f.content}</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="animate-pulse h-20 bg-gray-100 rounded" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {fbPageIndex < fbTotalPages - 1 && (
+                  <div className="flex items-center justify-center mt-4">
+                    <button
+                      className="px-4 py-2 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+                      onClick={() => setFbPageIndex(p => p + 1)}
+                      disabled={fbLoading}
+                    >
+                      {fbLoading ? 'Loading...' : 'Show more'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {instructor && (
+                <div className="mb-6">
+                  <div className="mb-4">
+                    <h2 className="text-xl mt-8 font-semibold text-gray-900">Instructor</h2>
+                  </div>
+                  <div className="space-y-3">
                     <div className="flex items-start gap-4">
                       {instructor.avatar ? (
-                        <img src={instructor.avatar} alt={instructor.name || 'Instructor'} className="w-16 h-16 rounded-full object-cover" />
-                      ) : null}
+                        <img src={instructor.avatar} alt={instructor.name || 'Instructor'} className="w-24 h-24 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-gray-200" />
+                      )}
                       <div className="flex-1">
-                        <div className="text-lg font-medium text-gray-900">{instructor.name || 'Instructor'}</div>
-                        {instructor.expertise && <div className="text-sm text-gray-600 mt-1">{instructor.expertise}</div>}
-                        {instructor.bio && <p className="text-sm text-gray-700 mt-2 whitespace-pre-line">{instructor.bio}</p>}
+                        <div className="text-lg font-medium text-gray-900 mx-auto">{instructor.name || 'Instructor'}</div>
+                        {instructor.expertise && <div className="text-sm text-gray-600 mt-1 mb-2">{instructor.expertise}</div>}
                         {instructor.socialLinks && instructor.socialLinks.length > 0 && (
-                          <div className="flex gap-3 mt-3">
+                          <div className="flex gap-3">
                             {instructor.socialLinks.map((link) => (
                               <a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm">
                                 {link.name || link.platform || 'Link'}
@@ -414,41 +723,88 @@ const CourseDetailPage: React.FC = () => {
                         )}
                       </div>
                     </div>
-                  </Card>
-                )}
+                    
+                    {instructor.bio && (
+                      <p className="text-sm text-gray-700 whitespace-pre-line">{instructor.bio}</p>
+                    )}
+                    
+                  </div>
+                </div>
+              )}
 
-                {/* Course Tests (tests not in chapters) */}
-                {course.courseTests && course.courseTests.length > 0 && (
-                  <Card className="p-6 mt-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Tests</h2>
-                    <div className="space-y-2">
-                      {course.courseTests
-                        .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
-                        .map((test) => (
-                          <div key={test.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">{test.title}</div>
-                              {test.durationMinutes && (
-                                <div className="text-xs text-gray-600 mt-1">Duration: {test.durationMinutes} minutes</div>
-                              )}
-                              {test.passScore && (
-                                <div className="text-xs text-gray-600 mt-1">Pass Score: {test.passScore}%</div>
-                              )}
-                            </div>
+              {instructor && instructor.id && instructorCourses && instructorCourses.some((c) => String(c.id) !== String(course.id)) && (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl mt-4 font-semibold text-gray-900">More courses by {instructor.name || 'this instructor'}</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 mb-4">
+                    {instructorCourses
+                      .filter((c) => String(c.id) !== String(course.id))
+                      .sort((a, b) => {
+                        const ca = (a as any).totalStudents ?? (a as any).totalEnrollments ?? (a as any).enrollmentCount ?? (a as any).enrollmentsCount ?? 0;
+                        const cb = (b as any).totalStudents ?? (b as any).totalEnrollments ?? (b as any).enrollmentCount ?? (b as any).enrollmentsCount ?? 0;
+                        return cb - ca;
+                      })
+                      .slice(0, visibleMoreCount)
+                      .map((c) => (
+                      <a key={c.id} href={`/courses/${c.id}`} className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow overflow-hidden">
+                        <div className="relative w-full h-40 bg-gray-100">
+                          {c.imageUrl ? (
+                            <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400">📚</div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[2.5rem]">{c.title}</h3>
+                          <div className="mt-2 text-xs text-gray-600 flex items-center justify-between">
+                            <span>{(c as any).courseType || 'N/A'}</span>
+                            {typeof c.price === 'number' && (
+                              <span className="font-semibold text-gray-900">${c.price}</span>
+                            )}
                           </div>
-                        ))}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                  {(
+                    instructorCourses.filter((c) => String(c.id) !== String(course.id)).length > visibleMoreCount ||
+                    morePage < moreTotalPages - 1 ||
+                    visibleMoreCount > 2
+                  ) && (
+                    <div className="mb-6 space-y-3">
+                      {(instructorCourses.filter((c) => String(c.id) !== String(course.id)).length > visibleMoreCount ||
+                        morePage < moreTotalPages - 1) && (
+                        <button
+                          className="inline-flex w-full text-blue-600 justify-center text-center items-center px-4 py-2 text-sm font-medium rounded-md border border-blue-300  hover:bg-blue-50 disabled:opacity-50"
+                          onClick={async () => {
+                            const filteredCount = instructorCourses.filter((c) => String(c.id) !== String(course.id)).length;
+                            if (filteredCount > visibleMoreCount) {
+                              setVisibleMoreCount(prev => prev + 4);
+                            } else if (morePage < moreTotalPages - 1) {
+                              await loadMoreCourses();
+                            }
+                          }}
+                          disabled={loadingMore}
+                        >
+                          {loadingMore ? 'Loading...' : 'Show more'}
+                        </button>
+                      )}
+                      {visibleMoreCount > 2 && (
+                        <button
+                          className="inline-flex w-full  justify-center text-center items-center px-4 py-2 text-sm font-medium rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50"
+                          onClick={() => setVisibleMoreCount(2)}
+                          disabled={loadingMore}
+                        >
+                          Show less
+                        </button>
+                      )}
                     </div>
-                  </Card>
-                )}
+                  )}
+                </>
+              )}
 
-                {rawCourse && (
-                  <Card className="p-6 mt-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Backend Data</h2>
-                    <pre className="text-xs whitespace-pre-wrap break-words bg-gray-50 border border-gray-200 rounded p-3 overflow-x-auto">
-{JSON.stringify(rawCourse, null, 2)}
-                    </pre>
-                  </Card>
-                )}
+            
               </div>
 
               {/* Sidebar */}

@@ -13,6 +13,8 @@ interface ChapterItemProps {
 
 const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, chapterIndex, onChange, onRemove }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [expandedLectureIndex, setExpandedLectureIndex] = useState<number | null>(null);
+  const [expandedTestIndex, setExpandedTestIndex] = useState<number | null>(null);
 
   const handleLectureChange = (lectureIndex: number, updatedLecture: LectureRequest) => {
     const lectures = [...(chapter.lectures || [])];
@@ -32,6 +34,7 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, chapterIndex, onChan
   const handleRemoveLecture = (lectureIndex: number) => {
     const lectures = chapter.lectures?.filter((_, i) => i !== lectureIndex) || [];
     onChange({ ...chapter, lectures });
+    if (expandedLectureIndex === lectureIndex) setExpandedLectureIndex(null);
   };
 
   const handleTestChange = (testIndex: number, updatedTest: TestRequest) => {
@@ -53,6 +56,7 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, chapterIndex, onChan
   const handleRemoveTest = (testIndex: number) => {
     const tests = chapter.tests?.filter((_, i) => i !== testIndex) || [];
     onChange({ ...chapter, tests });
+    if (expandedTestIndex === testIndex) setExpandedTestIndex(null);
   };
 
   return (
@@ -74,7 +78,14 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, chapterIndex, onChan
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => {
+              const next = !isExpanded;
+              setIsExpanded(next);
+              if (next) {
+                setExpandedLectureIndex(null);
+                setExpandedTestIndex(null);
+              }
+            }}
           >
             {isExpanded ? 'Collapse' : 'Expand'}
           </Button>
@@ -112,6 +123,10 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, chapterIndex, onChan
                 lectureIndex={lectureIndex}
                 onChange={(updatedLecture) => handleLectureChange(lectureIndex, updatedLecture)}
                 onRemove={() => handleRemoveLecture(lectureIndex)}
+                collapsed={expandedLectureIndex !== lectureIndex}
+                onToggle={() =>
+                  setExpandedLectureIndex((prev) => (prev === lectureIndex ? null : lectureIndex))
+                }
               />
             ))}
           </div>
@@ -138,6 +153,8 @@ const ChapterItem: React.FC<ChapterItemProps> = ({ chapter, chapterIndex, onChan
                     testIndex={testIndex}
                     onChange={(updatedTest) => handleTestChange(testIndex, updatedTest)}
                     onRemove={() => handleRemoveTest(testIndex)}
+                    collapsed={expandedTestIndex !== testIndex}
+                    onToggle={() => setExpandedTestIndex((prev) => (prev === testIndex ? null : testIndex))}
                   />
                 ))}
               </div>

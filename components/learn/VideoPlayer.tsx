@@ -1,46 +1,107 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface VideoPlayerProps {
   videoUrl?: string;
   title: string;
   fallbackTitle?: string;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onEnded?: () => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl, title, fallbackTitle }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl, title, fallbackTitle, onPlay, onPause, onEnded }) => {
   const isYouTubeUrl = (url?: string): boolean => {
     if (!url) return false;
     return url.includes('youtube.com') || url.includes('youtu.be');
   };
 
-  const getYouTubeEmbedUrl = (url: string): string => {
+  const getYouTubeVideoId = (url: string): string | null => {
     if (url.includes('youtube.com/watch?v=')) {
-      const videoId = url.split('v=')[1]?.split('&')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
+      return url.split('v=')[1]?.split('&')[0] || null;
     }
     if (url.includes('youtu.be/')) {
-      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-      return `https://www.youtube.com/embed/${videoId}`;
+      return url.split('youtu.be/')[1]?.split('?')[0] || null;
     }
-    return url;
+    return null;
   };
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const ytContainerRef = useRef<HTMLDivElement | null>(null);
+  const onPlayRef = useRef<undefined | (() => void)>(onPlay);
+  const onPauseRef = useRef<undefined | (() => void)>(onPause);
+  const onEndedRef = useRef<undefined | (() => void)>(onEnded);
+
+  // Keep refs in sync without causing player re-creation
+  useEffect(() => { onPlayRef.current = onPlay; }, [onPlay]);
+  useEffect(() => { onPauseRef.current = onPause; }, [onPause]);
+  useEffect(() => { onEndedRef.current = onEnded; }, [onEnded]);
+
+  useEffect(() => {
+    if (!videoUrl || !isYouTubeUrl(videoUrl)) return;
+    const id = getYouTubeVideoId(videoUrl);
+    if (!id) return;
+
+    let player: any;
+    const w = window as any;
+
+    const initPlayer = () => {
+      if (!ytContainerRef.current) return;
+      player = new w.YT.Player(ytContainerRef.current, {
+        width: '100%',
+        height: '100%',
+        videoId: id,
+        playerVars: {
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
+        events: {
+          onStateChange: (e: any) => {
+            const state = e?.data;
+            if (state === 1) {
+              onPlayRef.current && onPlayRef.current();
+            } else if (state === 2) {
+              onPauseRef.current && onPauseRef.current();
+            } else if (state === 0) {
+              onEndedRef.current && onEndedRef.current();
+            }
+          },
+        },
+      });
+    };
+
+    if (!w.YT || !w.YT.Player) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+      w.onYouTubeIframeAPIReady = () => {
+        initPlayer();
+      };
+    } else {
+      initPlayer();
+    }
+
+    return () => {
+      try { player && player.destroy && player.destroy(); } catch {}
+    };
+  }, [videoUrl]);
 
   return (
     <div className="bg-black rounded-lg overflow-hidden mb-4 aspect-video shadow-xl">
       {videoUrl ? (
         isYouTubeUrl(videoUrl) ? (
-          <iframe
-            src={getYouTubeEmbedUrl(videoUrl)}
-            className="w-full h-full"
-            title={`Video: ${title}`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+          <div ref={ytContainerRef} className="w-full h-full" />
         ) : (
           <video
+            ref={videoRef}
             src={videoUrl}
             controls
             className="w-full h-full"
             autoPlay
+            onPlay={onPlay}
+            onPause={onPause}
+            onEnded={onEnded}
           />
         )
       ) : (

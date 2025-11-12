@@ -1,5 +1,6 @@
 import React from 'react';
 import Tooltip from '@/components/ui/Tooltip';
+import { Check } from 'lucide-react';
 
 interface ChapterSummary {
   id: number;
@@ -35,6 +36,8 @@ interface CourseSidebarProps {
   onLectureClick: (lecture: LectureSummary) => void;
   onTestClick: (test: TestSummary) => void;
   onClose: () => void;
+  completedLectureIds?: number[];
+  completedTestIds?: number[];
 }
 
 const CourseSidebar: React.FC<CourseSidebarProps> = ({
@@ -45,6 +48,8 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
   onLectureClick,
   onTestClick,
   onClose,
+  completedLectureIds,
+  completedTestIds,
 }) => {
   return (
     <div className="p-3 sm:p-4">
@@ -82,6 +87,7 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
                     chapter.lectures
                       .sort((a, b) => a.orderIndex - b.orderIndex)
                       .map((lecture) => {
+                        const isCompleted = (completedLectureIds || []).includes(lecture.id);
                         const tooltipContent = lecture.description 
                           ? `${lecture.title}${lecture.duration ? ` - ${lecture.duration} min` : ''}\n${lecture.description}`
                           : `${lecture.title}${lecture.duration ? ` - ${lecture.duration} min` : ''}`;
@@ -104,11 +110,11 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
                                     </div>
                                   )}
                                 </div>
-                                {lecture.previewFree && (
-                                  <span className="ml-1 text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded flex-shrink-0">
-                                    Free
-                                  </span>
-                                )}
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  {isCompleted && (
+                                    <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                                  )}
+                                </div>
                               </div>
                             </button>
                           </Tooltip>
@@ -120,6 +126,7 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
                     chapter.tests
                       .sort((a, b) => a.orderIndex - b.orderIndex)
                       .map((test) => {
+                        const isCompleted = (completedTestIds || []).includes(test.id);
                         const tooltipContent = `Test: ${test.title}${test.durationMinutes ? ` - ${test.durationMinutes} min` : ''}${test.passScore ? ` - Pass: ${test.passScore}%` : ''}`;
                         return (
                           <Tooltip key={test.id} content={tooltipContent} className="w-full">
@@ -129,8 +136,13 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
                                 selectedTest?.id === test.id ? 'border-blue-500 bg-blue-100' : 'border-blue-200'
                               }`}
                             >
-                              <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
-                                Test: {test.title}
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                                  Test: {test.title}
+                                </div>
+                                {isCompleted && (
+                                  <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                                )}
                               </div>
                               <div className="flex gap-3 mt-1">
                                 {test.durationMinutes && (
@@ -164,6 +176,7 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
             {courseTests
               .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0))
               .map((test) => {
+                const isCompleted = (completedTestIds || []).includes(test.id);
                 const tooltipContent = `${test.title}${test.durationMinutes ? ` - ${test.durationMinutes} min` : ''}${test.passScore ? ` - Pass: ${test.passScore}%` : ''}`;
                 return (
                   <Tooltip key={test.id} content={tooltipContent} className="w-full">
@@ -173,7 +186,12 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
                         selectedTest?.id === test.id ? 'border-blue-500 bg-blue-100' : 'border-blue-200'
                       }`}
                     >
-                      <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{test.title}</div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">{test.title}</div>
+                        {isCompleted && (
+                          <Check className="w-4 h-4 text-green-600" strokeWidth={3} />
+                        )}
+                      </div>
                       <div className="flex gap-3 mt-1">
                         {test.durationMinutes && (
                           <div className="text-xs text-gray-600">

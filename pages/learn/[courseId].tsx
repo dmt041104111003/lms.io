@@ -11,6 +11,7 @@ import TestView from '@/components/learn/TestView';
 import CourseSidebar from '@/components/learn/CourseSidebar';
 import Dialog from '@/components/ui/Dialog';
 import instructorService, { TestDetailResponse, QuestionResponse } from '@/services/instructorService';
+import progressService from '@/services/progressService';
 
 interface ChapterSummary {
   id: number;
@@ -70,6 +71,21 @@ const LearnPage: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [testTimeRemaining, setTestTimeRemaining] = useState<number | null>(null);
   const [testStartTime, setTestStartTime] = useState<Date | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [lastPingAt, setLastPingAt] = useState<number | null>(null);
+  const [completedLectureIds, setCompletedLectureIds] = useState<number[]>([]);
+  const [completedTestIds, setCompletedTestIds] = useState<number[]>([]);
+
+  const pingLectureOnce = async () => {
+    if (!user?.id || !courseId || typeof courseId !== 'string' || !selectedLecture?.id) return;
+    const now = Date.now();
+    if (lastPingAt && now - lastPingAt >= 55000 && now - lastPingAt <= 65000) {
+      try {
+        await progressService.pingLecture(user.id, courseId, Number(selectedLecture.id));
+        setLastPingAt(now);
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     if (testTimeRemaining === null || testTimeRemaining <= 0 || testSubmitted) {
@@ -134,9 +150,56 @@ const LearnPage: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchCourse();
   }, [courseId, user, showError]);
+
+  // Load existing progress to pre-fill completed ticks
+  useEffect(() => {
+    const loadProgress = async () => {
+      if (!user?.id || !courseId || typeof courseId !== 'string') return;
+      try {
+        const list = await progressService.getUserProgress(user.id);
+        const found = (list || []).find((p) => String(p.id) === String(courseId));
+        if (!found) return;
+        const lec: number[] = [];
+        const tst: number[] = [];
+        (found.testAndLectureCompleted || []).forEach((it) => {
+          if (!it.completed || !it.contentId) return;
+          const cid = Number(it.contentId);
+          const t = (it.type || '').toLowerCase();
+          if (t === 'lecture') lec.push(cid);
+          else if (t === 'test') tst.push(cid);
+        });
+        setCompletedLectureIds(Array.from(new Set(lec)));
+        setCompletedTestIds(Array.from(new Set(tst)));
+      } catch {}
+    };
+    loadProgress();
+  }, [user?.id, courseId]);
+
+  // Auto-ping lecture progress only while video is playing
+  useEffect(() => {
+    if (!user?.id || !courseId || typeof courseId !== 'string' || !selectedLecture?.id) return;
+    if (!isPlaying) return;
+    const lectureId = Number(selectedLecture.id);
+    const ping = async () => {
+      try {
+        const res = await progressService.pingLecture(user.id, courseId, lectureId);
+        setLastPingAt(Date.now());
+        if (res?.completed === true) {
+          setCompletedLectureIds((prev) => (prev.includes(lectureId) ? prev : [...prev, lectureId]));
+        }
+      } catch {}
+    };
+    if (!lastPingAt) {
+      // Send an initial baseline ping to start counting from the beginning
+      ping();
+    }
+    const intervalId = setInterval(ping, 60000);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [user?.id, courseId, selectedLecture?.id, isPlaying, lastPingAt]);
 
   const handleLectureClick = (lecture: LectureSummary) => {
     setSelectedLecture(lecture);
@@ -145,6 +208,8 @@ const LearnPage: React.FC = () => {
     setTestAnswers({});
     setTestSubmitted(false);
     setTestScore(null);
+    setIsPlaying(false);
+    setLastPingAt(null);
   };
 
   const handleTestClick = (test: TestSummary) => {
@@ -163,6 +228,8 @@ const LearnPage: React.FC = () => {
     }
 
     setShowTestConfirmDialog(false);
+    setIsPlaying(false);
+    setLastPingAt(null);
 
     try {
       setLoadingTest(true);
@@ -276,6 +343,11 @@ const LearnPage: React.FC = () => {
         const result = apiResponse.result;
         setTestSubmitted(true);
         setTestScore(result.score || 0);
+        try {
+          const res = await progressService.completeTest(user.id, courseId, Number(selectedTest.id), Number(result.score) || 0);
+          const tid = Number(selectedTest.id);
+          setCompletedTestIds((prev) => (prev.includes(tid) ? prev : [...prev, tid]));
+        } catch {}
       } else {
         showError(apiResponse.message || 'Failed to submit test');
       }
@@ -375,6 +447,9 @@ const LearnPage: React.FC = () => {
                     <VideoPlayer
                       videoUrl={selectedLecture?.videoUrl || course.videoUrl}
                       title={selectedLecture?.title || course.title}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => { setIsPlaying(false); pingLectureOnce(); }}
+                      onEnded={() => { setIsPlaying(false); pingLectureOnce(); }}
                     />
 
                     {/* Lecture Info */}
@@ -411,6 +486,8 @@ const LearnPage: React.FC = () => {
                 onLectureClick={handleLectureClick}
                 onTestClick={handleTestClick}
                 onClose={() => setSidebarCollapsed(true)}
+                completedLectureIds={completedLectureIds}
+                completedTestIds={completedTestIds}
               />
             </div>
           </div>

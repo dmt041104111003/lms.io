@@ -33,7 +33,7 @@ const CourseContentSection: React.FC<CourseContentSectionProps> = ({ chapters, o
   };
 
   return (
-    <Card className="p-4 sm:p-6">
+    <Card className="p-4 sm:p-6 mt-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Course Content</h3>
         <Button

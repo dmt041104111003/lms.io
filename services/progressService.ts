@@ -1,5 +1,25 @@
 import apiRequest from '@/lib/api';
 
+export type CourseContentType = 'LECTURE' | 'TEST';
+
+export interface ProgressCreationRequest {
+  type: CourseContentType;
+  score?: number;
+  lectureId?: number;
+  duration?: number;
+  testId?: number;
+}
+
+export interface ProgressEntity {
+  id: number;
+  type?: CourseContentType;
+  score?: number | null;
+  completedAt?: string | null;
+  completed?: boolean | null;
+  watchedSeconds?: number | null;
+  duration?: number | null;
+}
+
 export interface ProgressLectureResponse {
   id: string;
   title: string;
@@ -47,6 +67,21 @@ export const progressService = {
     return apiRequest<ProgressResponse[]>(`/api/progress/user/${encodeURIComponent(userId)}`, {
       method: 'GET',
     });
+  },
+  async createProgress(userId: string, courseId: string, data: ProgressCreationRequest): Promise<ProgressEntity> {
+    return apiRequest<ProgressEntity>(
+      `/api/progress/user/${encodeURIComponent(userId)}/course/${encodeURIComponent(courseId)}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  },
+  async pingLecture(userId: string, courseId: string, lectureId: number): Promise<ProgressEntity> {
+    return this.createProgress(userId, courseId, { type: 'LECTURE', lectureId });
+  },
+  async completeTest(userId: string, courseId: string, testId: number, score?: number): Promise<ProgressEntity> {
+    return this.createProgress(userId, courseId, { type: 'TEST', testId, score: score ?? 0 });
   },
 };
 

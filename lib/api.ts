@@ -67,6 +67,59 @@ export async function apiRequest<T>(
   }
 }
 
+export async function apiRequestFull<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const config: RequestInit = {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    credentials: 'include',
+  };
+
+  const response = await fetch(url, config);
+  let data: ApiResponse<T>;
+
+  try {
+    data = await response.json();
+  } catch {
+    if (response.status === 401 || response.status === 403) {
+      handleUserLogout();
+    }
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  if (!response.ok) {
+    const errorMessage = data.message || `Request failed with status ${response.status}`;
+    if (
+      response.status === 401 ||
+      response.status === 403 ||
+      errorMessage.includes('USER_NOT_EXISTED') ||
+      errorMessage.includes('UNAUTHENTICATED')
+    ) {
+      handleUserLogout();
+    }
+    throw new Error(errorMessage);
+  }
+
+  if (data.code !== 1000) {
+    const errorMessage = data.message || 'API error';
+    if (
+      errorMessage.includes('USER_NOT_EXISTED') ||
+      errorMessage.includes('UNAUTHENTICATED')
+    ) {
+      handleUserLogout();
+    }
+    throw new Error(errorMessage);
+  }
+
+  return data;
+}
+
 function handleUserLogout() {
   if (typeof window !== 'undefined') {
     const pathname = window.location.pathname;

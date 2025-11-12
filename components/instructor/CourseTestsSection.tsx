@@ -10,6 +10,7 @@ interface CourseTestsSectionProps {
 }
 
 const CourseTestsSection: React.FC<CourseTestsSectionProps> = ({ tests, onTestsChange }) => {
+  const [expandedTestIndex, setExpandedTestIndex] = React.useState<number | null>(null);
   const handleTestChange = (testIndex: number, updatedTest: TestRequest) => {
     const newTests = [...tests];
     newTests[testIndex] = updatedTest;
@@ -29,10 +30,11 @@ const CourseTestsSection: React.FC<CourseTestsSectionProps> = ({ tests, onTestsC
   const handleRemoveTest = (testIndex: number) => {
     const newTests = tests.filter((_, i) => i !== testIndex);
     onTestsChange(newTests);
+    if (expandedTestIndex === testIndex) setExpandedTestIndex(null);
   };
 
   return (
-    <Card className="p-4 sm:p-6">
+    <Card className="p-4 my-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Course Tests (Global)</h3>
         <Button
@@ -54,6 +56,8 @@ const CourseTestsSection: React.FC<CourseTestsSectionProps> = ({ tests, onTestsC
               testIndex={testIndex}
               onChange={(updatedTest) => handleTestChange(testIndex, updatedTest)}
               onRemove={() => handleRemoveTest(testIndex)}
+              collapsed={expandedTestIndex !== testIndex}
+              onToggle={() => setExpandedTestIndex((prev) => (prev === testIndex ? null : testIndex))}
             />
           ))}
         </div>

@@ -48,7 +48,7 @@ export interface CourseCreationRequest {
   courseType: 'FREE' | 'PAID';
   discountEndTime?: string;
   policyId?: string;
-  instructorId: number;
+  instructorId?: number;
   chapters?: ChapterRequest[];
   paymentMethods?: PaymentOptionRequest[];
   courseTests?: TestRequest[];
@@ -256,6 +256,13 @@ export interface SocialLinkResponse {
   platform?: string;
   name?: string;
   url: string;
+}
+
+export interface InstructorProfileUpdateRequest {
+  name?: string;
+  bio?: string;
+  expertise?: string;
+  socialLinks?: Array<{ name: string; url: string }>;
 }
 
 export interface TagResponse {
@@ -591,6 +598,43 @@ export const instructorService = {
     return apiRequest<InstructorProfileResponse>(`/api/instructor-profiles/user/${userId}`, {
       method: 'GET',
     });
+  },
+
+  async updateInstructorProfile(
+    id: number,
+    data: InstructorProfileUpdateRequest,
+    imageFile?: File
+  ): Promise<InstructorProfileResponse> {
+    const formData = new FormData();
+    const jsonData = JSON.stringify(data);
+    formData.append('data', new Blob([jsonData], { type: 'application/json' }));
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    const url = `${API_BASE_URL}/api/instructor-profiles/${id}`;
+    const config: RequestInit = {
+      method: 'PUT',
+      body: formData,
+      credentials: 'include',
+    };
+    try {
+      const response = await fetch(url, config);
+      const responseData = await response.json();
+      if (!response.ok) {
+        const errorMessage = responseData.message || `Request failed with status ${response.status}`;
+        throw new Error(errorMessage);
+      }
+      if (responseData.code !== 1000) {
+        throw new Error(responseData.message || 'API error');
+      }
+      return responseData.result;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Unknown error occurred');
+    }
   },
 
   // Tag Management

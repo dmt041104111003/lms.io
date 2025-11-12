@@ -26,9 +26,8 @@ const CreateCourse: React.FC = () => {
     videoUrl: '',
     draft: false,
     price: 0,
-    currency: 'USD',
+    currency: 'ADA',
     courseType: 'FREE',
-    instructorId: 0,
     chapters: [],
     courseTests: [],
     discount: 0,
@@ -58,7 +57,6 @@ const CreateCourse: React.FC = () => {
         const profile = await instructorService.getInstructorProfileByUserId(user.id);
         if (profile?.id) {
           setInstructorProfileId(profile.id);
-          setFormData(prev => ({ ...prev, instructorId: profile.id }));
         }
       } catch (err) {
         console.error('Failed to fetch instructor profile:', err);
@@ -163,10 +161,9 @@ const CreateCourse: React.FC = () => {
   };
 
   const handleJsonImport = (importedData: CourseCreationRequest) => {
-    setFormData({
-      ...importedData,
-      instructorId: instructorProfileId || importedData.instructorId || 0,
-    });
+    // Omit instructorId if present in imported JSON
+    const { instructorId: _omit, ...rest } = importedData as any;
+    setFormData(rest);
     if (importedData.tagIds && importedData.tagIds.length > 0) {
       setSelectedTagIds(importedData.tagIds);
     }
