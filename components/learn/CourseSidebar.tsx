@@ -38,6 +38,12 @@ interface CourseSidebarProps {
   onClose: () => void;
   completedLectureIds?: number[];
   completedTestIds?: number[];
+  courseId?: string;
+  userId?: string;
+  isCourseCompleted?: boolean;
+  isCourseMarkedCompleted?: boolean;
+  onRequestCertificate?: () => void;
+  requestingCertificate?: boolean;
 }
 
 const CourseSidebar: React.FC<CourseSidebarProps> = ({
@@ -50,9 +56,15 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
   onClose,
   completedLectureIds,
   completedTestIds,
+  courseId,
+  userId,
+  isCourseCompleted,
+  isCourseMarkedCompleted,
+  onRequestCertificate,
+  requestingCertificate,
 }) => {
   return (
-    <div className="p-3 sm:p-4">
+    <div className="relative flex flex-col h-full p-3 sm:p-4">
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h2 className="text-base sm:text-lg font-semibold text-gray-900">Course Content</h2>
         <button
@@ -209,6 +221,19 @@ const CourseSidebar: React.FC<CourseSidebarProps> = ({
                 );
               })}
           </div>
+        </div>
+      )}
+
+      {/* Certificate Request Button */}
+      {isCourseCompleted && onRequestCertificate && (
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 bg-white border-t border-gray-200 shadow-lg">
+          <button
+            onClick={onRequestCertificate}
+            disabled={requestingCertificate || isCourseMarkedCompleted}
+            className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isCourseMarkedCompleted ? 'Đang chờ duyệt chứng chỉ' : requestingCertificate ? 'Đang xử lý...' : 'Nhận chứng chỉ khóa học'}
+          </button>
         </div>
       )}
     </div>

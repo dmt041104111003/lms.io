@@ -21,7 +21,16 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({ user, onRefresh }) =>
     idValue = (user.github || '').trim();
   } else if (methodName === 'WALLET') {
     idLabel = 'Wallet address';
-    idValue = (user.walletAddress || '').trim();
+    const walletAddress = (user.walletAddress || '').trim();
+    if (walletAddress) {
+      if (walletAddress.length <= 20) {
+        idValue = walletAddress;
+      } else {
+        idValue = `${walletAddress.slice(0, 20)}...`;
+      }
+    } else {
+      idValue = 'Not set';
+    }
   } else {
     idLabel = 'Email';
     idValue = (user.email || '').trim();

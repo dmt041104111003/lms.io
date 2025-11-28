@@ -1,6 +1,6 @@
-import apiRequest from '@/lib/api';
+import apiRequest from "@/lib/api";
 
-export type CourseContentType = 'LECTURE' | 'TEST';
+export type CourseContentType = "LECTURE" | "TEST";
 
 export interface ProgressCreationRequest {
   type: CourseContentType;
@@ -42,7 +42,7 @@ export interface ProgressChapterResponse {
 
 export interface TestAndLectureCompletedResponse {
   id: number;
-  type?: 'lecture' | 'test' | string | null;
+  type?: "lecture" | "test" | string | null;
   score?: number | null;
   completedAt?: string | null;
   completed?: boolean | null;
@@ -62,26 +62,76 @@ export interface ProgressResponse {
   testAndLectureCompleted: TestAndLectureCompletedResponse[];
 }
 
+export interface ActivityResponse {
+  type: string;
+  progressId: number;
+  completedAt: string;
+}
+
 export const progressService = {
   async getUserProgress(userId: string): Promise<ProgressResponse[]> {
-    return apiRequest<ProgressResponse[]>(`/api/progress/user/${encodeURIComponent(userId)}`, {
-      method: 'GET',
-    });
-  },
-  async createProgress(userId: string, courseId: string, data: ProgressCreationRequest): Promise<ProgressEntity> {
-    return apiRequest<ProgressEntity>(
-      `/api/progress/user/${encodeURIComponent(userId)}/course/${encodeURIComponent(courseId)}`,
+    return apiRequest<ProgressResponse[]>(
+      `/api/progress/user/${encodeURIComponent(userId)}`,
       {
-        method: 'POST',
+        method: "GET",
+      }
+    );
+  },
+  async createProgress(
+    userId: string,
+    courseId: string,
+    data: ProgressCreationRequest
+  ): Promise<ProgressEntity> {
+    return apiRequest<ProgressEntity>(
+      `/api/progress/user/${encodeURIComponent(
+        userId
+      )}/course/${encodeURIComponent(courseId)}`,
+      {
+        method: "POST",
         body: JSON.stringify(data),
       }
     );
   },
-  async pingLecture(userId: string, courseId: string, lectureId: number): Promise<ProgressEntity> {
-    return this.createProgress(userId, courseId, { type: 'LECTURE', lectureId });
+  async pingLecture(
+    userId: string,
+    courseId: string,
+    lectureId: number
+  ): Promise<ProgressEntity> {
+    return this.createProgress(userId, courseId, {
+      type: "LECTURE",
+      lectureId,
+    });
   },
-  async completeTest(userId: string, courseId: string, testId: number, score?: number): Promise<ProgressEntity> {
-    return this.createProgress(userId, courseId, { type: 'TEST', testId, score: score ?? 0 });
+  async completeTest(
+    userId: string,
+    courseId: string,
+    testId: number,
+    score?: number
+  ): Promise<ProgressEntity> {
+    return this.createProgress(userId, courseId, {
+      type: "TEST",
+      testId,
+      score: score ?? 0,
+    });
+  },
+  async updateCourseCompletionStatus(
+    userId: string,
+    courseId: string
+  ): Promise<{ message: string }> {
+    return apiRequest<{ message: string }>(
+      `/api/enrollment/course/${courseId}/user/${userId}/complete`,
+      {
+        method: "PUT",
+      }
+    );
+  },
+  async getUserActivity(userId: string): Promise<ActivityResponse[]> {
+    return apiRequest<ActivityResponse[]>(
+      `/api/progress/user/${encodeURIComponent(userId)}/activity`,
+      {
+        method: "GET",
+      }
+    );
   },
 };
 

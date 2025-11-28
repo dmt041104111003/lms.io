@@ -75,6 +75,8 @@ const LearnPage: React.FC = () => {
   const [lastPingAt, setLastPingAt] = useState<number | null>(null);
   const [completedLectureIds, setCompletedLectureIds] = useState<number[]>([]);
   const [completedTestIds, setCompletedTestIds] = useState<number[]>([]);
+  const [isCourseMarkedCompleted, setIsCourseMarkedCompleted] = useState(false);
+  const [requestingCertificate, setRequestingCertificate] = useState(false);
 
   const pingLectureOnce = async () => {
     if (!user?.id || !courseId || typeof courseId !== 'string' || !selectedLecture?.id) return;
@@ -114,7 +116,7 @@ const LearnPage: React.FC = () => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        const detailUrl = `/api/course/${courseId}${user?.id ? `?userId=${user.id}` : ''}`;
+        const detailUrl = `/api/learn/${courseId}`;
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://lms-backend-0-0-1.onrender.com'}${detailUrl}`, {
           credentials: 'include',
         });
@@ -122,17 +124,12 @@ const LearnPage: React.FC = () => {
 
         if (apiResponse.code === 1000 && apiResponse.result) {
           const result = apiResponse.result;
-          setCourse({
-            id: result.id,
-            title: result.title || '',
-            description: result.description,
-            imageUrl: result.imageUrl,
-            videoUrl: result.videoUrl,
-            price: result.price,
-            courseType: result.courseType,
-            chapters: result.chapters || [],
-            courseTests: result.courseTests || [],
-          });
+          setCourse(result);
+          
+          // Set completed status from API response
+          if (result.completed !== undefined) {
+            setIsCourseMarkedCompleted(result.completed);
+          }
 
           const firstLecture = result.chapters
             ?.flatMap((ch: ChapterSummary) => ch.lectures || [])
@@ -359,6 +356,26 @@ const LearnPage: React.FC = () => {
     }
   };
 
+  const handleRequestCertificate = async () => {
+    if (!user?.id || !courseId || typeof courseId !== 'string') {
+      showError('You must be logged in to request a certificate');
+      return;
+    }
+
+    setRequestingCertificate(true);
+    try {
+      // First update course completion status
+      await progressService.updateCourseCompletionStatus(user.id, courseId);
+      
+      // Show success message
+      alert('Chúc mừng! Bạn đã hoàn thành khóa học. Yêu cầu chứng chỉ đã được gửi đến giáo viên.');
+    } catch (error: any) {
+      showError(error.message || 'Failed to request certificate. Please try again.');
+    } finally {
+      setRequestingCertificate(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -389,6 +406,11 @@ const LearnPage: React.FC = () => {
   const allTests = course.chapters
     ?.flatMap((ch) => ch.tests || [])
     .sort((a, b) => a.orderIndex - b.orderIndex) || [];
+
+  // Calculate course completion
+  const totalItems = allLectures.length + allTests.length;
+  const completedItems = completedLectureIds.length + completedTestIds.length;
+  const isCourseCompleted = totalItems > 0 && completedItems === totalItems;
 
   return (
     <>
@@ -488,6 +510,12 @@ const LearnPage: React.FC = () => {
                 onClose={() => setSidebarCollapsed(true)}
                 completedLectureIds={completedLectureIds}
                 completedTestIds={completedTestIds}
+                courseId={courseId as string}
+                userId={user?.id}
+                isCourseCompleted={isCourseCompleted}
+                isCourseMarkedCompleted={isCourseMarkedCompleted}
+                onRequestCertificate={handleRequestCertificate}
+                requestingCertificate={requestingCertificate}
               />
             </div>
           </div>

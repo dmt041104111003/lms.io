@@ -7,8 +7,14 @@ export interface Course {
   description?: string;
   category?: string;
   price?: string;
+  originalPrice?: number;
+  discountPercent?: number;
+  currency?: string;
+  courseType?: string;
   duration?: string;
   students?: number;
   image?: string;
+  educatorAvatar?: string;
+  enrollmentCount?: number;
 }
 

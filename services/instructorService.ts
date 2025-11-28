@@ -15,6 +15,7 @@ export interface CourseResponse {
   title: string;
   description?: string;
   price?: number;
+  discount?: number;
   imageUrl?: string;
   courseType?: string;
   status?: string;
@@ -22,6 +23,14 @@ export interface CourseResponse {
   instructorId?: number;
   createdAt?: string;
   updatedAt?: string;
+  enrollmentCount?: number;
+  educatorName?: string;
+  educatorAvatar?: string;
+  instructorName?: string;
+  instructorAvatar?: string;
+  numOfStudents?: number;
+  currency?: string;
+  rating?: number;
 }
 
 export interface CourseSearchParams {
@@ -179,6 +188,7 @@ export interface CourseShortInformationResponse {
   courseType?: string;
   price?: number;
   discount?: number;
+  enrollmentCount?: number;
 }
 
 export interface MediaItem {
@@ -364,6 +374,10 @@ export const instructorService = {
         draft: c.draft,
         courseType: c.courseType,
         price: c.price,
+        discount: c.discount,
+        enrollmentCount: c.enrollmentCount,
+        educatorName: (c as any).educatorName,
+        educatorAvatar: (c as any).educatorAvatar,
         status: c.draft ? 'DRAFT' : 'PUBLISHED',
       } as CourseResponse)),
     };

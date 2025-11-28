@@ -70,6 +70,12 @@ export const authService = {
     await apiRequest('/api/auth/logout', {
       method: 'POST',
     });
+    
+    // Remove wallet addresses and course data from localStorage on logout
+    localStorage.removeItem('wallet_address');
+    localStorage.removeItem('connected_wallet_address');
+    localStorage.removeItem('connected_wallet_name');
+    localStorage.removeItem('mycourse_recent');
   },
 
   async getMyInfo(): Promise<UserResponse> {

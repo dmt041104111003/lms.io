@@ -97,37 +97,42 @@ const SearchSection: React.FC = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      {/* Hero Slider */}
-      <HeroSlider slides={slides} autoPlay={true} autoPlayInterval={5000} />
-
-      {/* Search Bar */}
-      <div className="w-full max-w-xl sm:max-w-2xl mx-auto mb-6 sm:mb-8">
-        <div className="relative flex items-center border border-gray-300 rounded-full shadow-sm hover:shadow-md transition-shadow focus-within:shadow-md">
-          <FiSearch className="absolute left-3 sm:left-4 text-gray-400 text-lg sm:text-xl" />
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search courses, instructors, or topics..."
-            className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 rounded-full text-sm sm:text-base focus:outline-none"
-          />
-        </div>
-      </div>
-
-      {/* Action Buttons removed as requested */}
-
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 mb-6">
-        <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-3">Browse by topics</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-12 gap-2">
-          {(tags || []).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => { setSelectedTag(t); setQ(''); setCoursePage(null); loadCourses({ tagId: String(t.id), page:0, size:12 }); }}
-              className={`border rounded px-2 py-1.5 sm:py-2 text-xs text-center transition ${selectedTag?.id === t.id ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-            >
-              {t.name}
-            </button>
-          ))}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="lg:col-span-2">
+            {/* Hero Slider */}
+            <HeroSlider slides={slides} autoPlay={true} autoPlayInterval={5000} />
+          </div>
+          <div className="lg:col-span-1">
+            {/* Search Bar */}
+            <div className="mb-4 sm:mb-6">
+              <div className="relative flex items-center border border-gray-300 rounded-full shadow-sm hover:shadow-md transition-shadow focus-within:shadow-md">
+                <FiSearch className="absolute left-3 sm:left-4 text-gray-400 text-lg sm:text-xl" />
+                <input
+                  type="text"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search courses, instructors, or topics..."
+                  className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 rounded-full text-sm sm:text-base focus:outline-none"
+                />
+              </div>
+            </div>
+            {/* Browse by topics */}
+            <div>
+              <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-3">Browse by topics</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-2">
+                {(tags || []).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => { setSelectedTag(t); setQ(''); setCoursePage(null); loadCourses({ tagId: String(t.id), page:0, size:12 }); }}
+                    className={`border rounded px-2 py-1.5 sm:py-2 text-xs text-center transition ${selectedTag?.id === t.id ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
         {/* Search Results (if any) */}

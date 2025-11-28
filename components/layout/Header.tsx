@@ -44,14 +44,14 @@ const Header: React.FC = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1 flex-shrink-0">
             <Link 
-              href="/courses" 
+              href="/home" 
               className={`px-3 py-2 text-sm transition-colors border-b-2 ${
-                isActiveRoute('/courses')
+                isActiveRoute('/home')
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              Courses
+              Home
             </Link>
             {isAuthenticated && (
               <Link 
@@ -164,15 +164,15 @@ const Header: React.FC = () => {
           <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
             <div className="flex flex-col gap-2">
               <Link 
-                href="/courses" 
+                href="/home" 
                 className={`px-3 py-2 text-sm transition-colors border-b-2 ${
-                  isActiveRoute('/courses')
+                  isActiveRoute('/home')
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Courses
+                Home
               </Link>
               {isAuthenticated && (
                 <Link 

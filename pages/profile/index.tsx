@@ -10,8 +10,10 @@ import PreferencesTab from '@/components/profile/PreferencesTab';
 import PaymentHistoryTab from '@/components/profile/PaymentHistoryTab';
 import CertificatesTab from '@/components/profile/CertificatesTab';
 import LogoutButton from '@/components/profile/LogoutButton';
+import { WalletService } from '@/services/walletService';
 import SEO from '@/components/ui/SEO';
 import authService, { UserResponse } from '@/services/authService';
+import ActivityHeatmap from '@/components/profile/ActivityHeatmap';
 
 const Profile: React.FC = () => {
   const router = useRouter();
@@ -35,6 +37,8 @@ const Profile: React.FC = () => {
     try {
       await authService.logout();
       localStorage.removeItem('access_token');
+      // Clear wallet data when logging out
+      WalletService.disconnectWallet();
       router.push('/login');
     } catch (err) {
       console.error('Logout error:', err);
@@ -54,6 +58,12 @@ const Profile: React.FC = () => {
       <Layout>
         <div className="min-h-screen bg-gray-50">
           {user && <ProfileHeader user={user} />}
+
+          {user && (
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+              <ActivityHeatmap userId={user.id} />
+            </div>
+          )}
 
           {/* Main Content */}
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

@@ -5,6 +5,7 @@ import SEO from '@/components/ui/SEO';
 import instructorService, { PageResponse, CourseResponse, TagResponse } from '@/services/instructorService';
 import { Course } from '@/components/course/types';
 import { useDebounce } from '@/hooks/useDebounce';
+ 
 
 const CoursesPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -33,21 +34,35 @@ const CoursesPage: React.FC = () => {
               return {
                 id: c.id,
                 title: c.title,
-                instructor: '',
+                instructor: (c as any)?.educatorName || '',
                 description: c.description,
                 price: c.courseType === 'FREE' || c.price === 0 ? 'Free' : (c.price != null ? `$${c.price}` : undefined),
+                originalPrice: c.price ?? detail.price ?? 0,
+                discountPercent: (c as any).discount ?? (detail as any)?.discount ?? 0,
+                currency: (detail as any)?.currency,
+                courseType: c.courseType || (detail as any)?.courseType,
+                educatorAvatar: (c as any)?.educatorAvatar,
+                enrollmentCount: (c as any)?.enrollmentCount ?? (detail as any)?.numOfStudents,
                 image: c.imageUrl,
-                createdAt: detail.createdAt || (detail as any).createdAt, 
+                createdAt: detail.createdAt || (detail as any).createdAt,
+                rating: (c as any)?.rating ?? (detail as any)?.rating,
               } as Course & { createdAt?: string };
             } catch (err) {
               return {
                 id: c.id,
                 title: c.title,
-                instructor: '',
+                instructor: (c as any)?.educatorName || '',
                 description: c.description,
                 price: c.courseType === 'FREE' || c.price === 0 ? 'Free' : (c.price != null ? `$${c.price}` : undefined),
+                originalPrice: c.price ?? 0,
+                discountPercent: (c as any).discount ?? 0,
+                currency: undefined,
+                courseType: c.courseType,
+                educatorAvatar: (c as any)?.educatorAvatar,
+                enrollmentCount: (c as any)?.enrollmentCount,
                 image: c.imageUrl,
                 createdAt: undefined,
+                rating: (c as any)?.rating,
               } as Course & { createdAt?: string };
             }
           })
@@ -69,6 +84,8 @@ const CoursesPage: React.FC = () => {
     load();
   }, [debouncedKeyword, selectedTagId]);
 
+  
+
   useEffect(() => {
     const loadTags = async () => {
       try {
@@ -89,6 +106,7 @@ const CoursesPage: React.FC = () => {
       />
       <Layout>
         <div className="min-h-[calc(100vh-200px)] py-6">
+          
           <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 mb-4 flex flex-col sm:flex-row gap-3">
             <input
               type="text"

@@ -102,19 +102,28 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
           <table className="w-full table-fixed border-collapse">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 border-b-2 border-r border-gray-300">
+                  Image
+                </th>
                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 border-b-2 border-r border-gray-300">
                   Course
                 </th>
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 border-b-2 border-r border-gray-300">
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 border-b-2 border-r border-gray-300">
                   Status
                 </th>
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6 border-b-2 border-r border-gray-300">
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 border-b-2 border-r border-gray-300">
                   Type
                 </th>
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6 border-b-2 border-r border-gray-300">
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 border-b-2 border-r border-gray-300">
                   Price
                 </th>
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6 border-b-2 border-gray-300">
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 border-b-2 border-r border-gray-300">
+                  Discount
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 border-b-2 border-r border-gray-300">
+                  Students
+                </th>
+                <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-1/12 border-b-2 border-gray-300">
                   Actions
                 </th>
               </tr>
@@ -125,29 +134,31 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
 
                 return (
                   <tr key={course.id} className="hover:bg-gray-50 border-b border-gray-300">
-                    <td className="px-3 py-4 border-r border-gray-300">
-                      <div className="flex items-center min-w-0">
-                        {course.imageUrl ? (
+                    <td className=" border-r border-gray-300 text-center">
+                      {course.imageUrl ? (
+                        <div className="relative w-16 h-10 mx-auto overflow-hidden rounded">
                           <img
                             src={course.imageUrl}
                             alt={course.title}
-                            className="w-10 h-10 rounded object-cover flex-shrink-0"
+                            className="absolute inset-0 w-full h-full object-cover"
                           />
-                        ) : (
-                          <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">
-                            No Image
-                          </div>
-                        )}
-                        <div className="ml-2 min-w-0 flex-1">
-                          <Tooltip content={course.title}>
-                            <div className="text-sm font-medium text-gray-900 truncate">
-                              {displayTitle}
-                            </div>
-                          </Tooltip>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="w-16 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs mx-auto">
+                          No Image
+                        </div>
+                      )}
                     </td>
                     <td className="px-3 py-4 border-r border-gray-300">
+                      <div className="min-w-0">
+                        <Tooltip content={course.title}>
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {displayTitle}
+                          </div>
+                        </Tooltip>
+                      </div>
+                    </td>
+                    <td className="px-3 py-4 border-r border-gray-300 text-center">
                       <span
                         className={`inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full border ${
                           course.draft
@@ -159,14 +170,24 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
                         {course.draft ? 'Draft' : 'Published'}
                       </span>
                     </td>
-                    <td className="px-3 py-4 border-r border-gray-300">
+                    <td className="px-3 py-4 border-r border-gray-300 text-center">
                       <span className="text-sm text-gray-700">
                         {course.courseType || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-3 py-4 border-r border-gray-300">
+                    <td className="px-3 py-4 border-r border-gray-300 text-center">
                       <span className="text-sm text-gray-700">
                         {course.price !== undefined ? `$${course.price}` : 'Free'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-4 border-r border-gray-300 text-center">
+                      <span className="text-sm text-gray-700">
+                        {course.discount ? `${course.discount}%` : 'No discount'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-4 border-r border-gray-300 text-center">
+                      <span className="text-sm font-medium text-blue-600">
+                        {course.enrollmentCount || 0}
                       </span>
                     </td>
                     <td className="px-3 py-4 text-right text-sm font-medium">
@@ -209,45 +230,58 @@ const CourseTable: React.FC<CourseTableProps> = ({ courses, onRefresh, onEdit, o
 
             return (
               <div key={course.id} className="p-4 hover:bg-gray-50">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center flex-1 min-w-0">
+                <div className="flex items-start gap-3">
+                  {/* Image column */}
+                  <div className="flex-shrink-0">
                     {course.imageUrl ? (
-                      <img
-                        src={course.imageUrl}
-                        alt={course.title}
-                        className="w-10 h-10 rounded object-cover flex-shrink-0"
-                      />
+                      <div className="relative w-16 h-10 overflow-hidden rounded">
+                        <img
+                          src={course.imageUrl}
+                          alt={course.title}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
                     ) : (
-                      <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">
+                      <div className="w-16 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
                         No Image
                       </div>
                     )}
-                    <div className="ml-2 flex-1 min-w-0">
-                      <Tooltip content={course.title}>
-                        <div className="text-sm font-medium text-gray-900 truncate">
-                          {displayTitle}
-                        </div>
-                      </Tooltip>
-                      <div className="mt-1">
-                        <span
-                          className={`inline-flex items-center gap-2 text-[10px] px-2 py-0.5 rounded-full border ${
-                            course.draft
-                              ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                              : 'bg-green-50 text-green-700 border-green-200'
-                          }`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${course.draft ? 'bg-yellow-500' : 'bg-green-500'}`} />
-                          {course.draft ? 'Draft' : 'Published'}
-                        </span>
+                  </div>
+                  
+                  {/* Content column */}
+                  <div className="flex-1 min-w-0">
+                    <Tooltip content={course.title}>
+                      <div className="text-sm font-medium text-gray-900 truncate">
+                        {displayTitle}
                       </div>
+                    </Tooltip>
+                    <div className="mt-1">
+                      <span
+                        className={`inline-flex items-center gap-2 text-[10px] px-2 py-0.5 rounded-full border ${
+                          course.draft
+                            ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                            : 'bg-green-50 text-green-700 border-green-200'
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${course.draft ? 'bg-yellow-500' : 'bg-green-500'}`} />
+                        {course.draft ? 'Draft' : 'Published'}
+                      </span>
                     </div>
                   </div>
+                  
+                  {/* Actions column */}
                   <div className="flex flex-col gap-2 items-end flex-shrink-0">
                     <span className="text-xs text-gray-700 whitespace-nowrap">
                       {course.courseType || 'N/A'}
                     </span>
                     <span className="text-xs text-gray-700 whitespace-nowrap">
                       {course.price !== undefined ? `$${course.price}` : 'Free'}
+                    </span>
+                    <span className="text-xs text-gray-700 whitespace-nowrap">
+                      {course.discount ? `${course.discount}% off` : 'No discount'}
+                    </span>
+                    <span className="text-xs text-blue-600 font-medium whitespace-nowrap">
+                      {course.enrollmentCount || 0} students
                     </span>
                     <Dropdown
                       options={[

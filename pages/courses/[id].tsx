@@ -7,6 +7,7 @@ import instructorService, { CourseResponse, InstructorProfileResponse } from '@/
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import ToastContainer from '@/components/ui/ToastContainer';
+import CoursePayment from '@/components/payment/CoursePayment';
 import { FiTag, FiClock, FiBookOpen, FiCheckSquare, FiCalendar, FiRefreshCw, FiChevronDown, FiPlayCircle, FiFileText } from 'react-icons/fi';
 import feedbackService, { FeedbackItem } from '@/services/feedbackService';
 
@@ -104,6 +105,12 @@ const CourseDetailPage: React.FC = () => {
           const result = apiResponse.result;
           console.log('[CourseDetail] API /api/course/:id result', result);
           setRawCourse(result);
+          
+          // Set enrollment status if available in API response
+          if (result.enrolled !== undefined) {
+            setIsEnrolled(result.enrolled);
+          }
+          
           const isDraftFlag =
             result.draft === true ||
             result.isDraft === true ||
@@ -137,11 +144,6 @@ const CourseDetailPage: React.FC = () => {
             courseTests: result.courseTests || [],
           });
           
-          try {
-            const recentRaw = localStorage.getItem('my_courses_recent');
-            const recent: Array<{ id: string }> = recentRaw ? JSON.parse(recentRaw) : [];
-            setIsEnrolled(recent.some(c => c.id === String(result.id)));
-          } catch {}
         } else {
           // Fallback to basic course info
           const data = await instructorService.getCourseById(id);
@@ -169,11 +171,6 @@ const CourseDetailPage: React.FC = () => {
             chapters: [],
             courseTests: [],
           });
-          try {
-            const recentRaw = localStorage.getItem('my_courses_recent');
-            const recent: Array<{ id: string }> = recentRaw ? JSON.parse(recentRaw) : [];
-            setIsEnrolled(recent.some(c => c.id === String(data.id)));
-          } catch {}
         }
       } catch (err) {
         console.error('Failed to fetch course detail:', err);
@@ -840,76 +837,50 @@ const CourseDetailPage: React.FC = () => {
                    
                     <div className="mt-4 grid grid-cols-1 gap-3">
                       <div className="grid grid-cols-1 gap-3">
-                        <button
-                          className="w-full inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={enrolling || (priceLabel === 'Free' && isEnrolled)}
-                          onClick={async () => {
-                            if (priceLabel === 'Free') {
-                              if (isEnrolled) return;
-                              if (!user?.id) {
-                                router.push('/login');
-                                return;
-                              }
-                              try {
-                                setEnrolling(true);
-                                await instructorService.enrollCourse({ userId: user.id, courseId: String(course.id) });
-                                try {
-                                  const recentRaw = localStorage.getItem('my_courses_recent');
-                                  const recent: Array<{ id: string; title: string; imageUrl?: string; accessedAt?: string }> = recentRaw ? JSON.parse(recentRaw) : [];
-                                  const nowIso = new Date().toISOString();
-                                  const updated = [
-                                    { id: String(course.id), title: course.title, imageUrl: course.imageUrl, accessedAt: nowIso },
-                                    ...recent.filter(c => c.id !== String(course.id))
-                                  ].slice(0, 20);
-                                  localStorage.setItem('my_courses_recent', JSON.stringify(updated));
-                                } catch {}
-                                setIsEnrolled(true);
-                                success('Enrolled successfully!');
-                                setTimeout(() => router.push('/my-courses'), 1200);
-                              } catch (e: any) {
-                                showError(e?.message || 'Failed to enroll');
-                              } finally {
-                                setEnrolling(false);
-                              }
-                            } else {
-                              if (!user?.id) {
-                                router.push('/login');
-                                return;
-                              }
-                              try {
-                                setEnrolling(true);
-                                await instructorService.enrollCourse({ userId: user.id, courseId: String(course.id) });
-                                try {
-                                  const recentRaw = localStorage.getItem('my_courses_recent');
-                                  const recent: Array<{ id: string; title: string; imageUrl?: string; accessedAt?: string }> = recentRaw ? JSON.parse(recentRaw) : [];
-                                  const nowIso = new Date().toISOString();
-                                  const updated = [
-                                    { id: String(course.id), title: course.title, imageUrl: course.imageUrl, accessedAt: nowIso },
-                                    ...recent.filter(c => c.id !== String(course.id))
-                                  ].slice(0, 20);
-                                  localStorage.setItem('my_courses_recent', JSON.stringify(updated));
-                                } catch {}
-                                setIsEnrolled(true);
-                                success('Enrolled successfully!');
-                                setTimeout(() => router.push('/my-courses'), 1200);
-                              } catch (e: any) {
-                                showError(e?.message || 'Failed to enroll');
-                              } finally {
-                                setEnrolling(false);
-                              }
-                            }
-                          }}
-                        >
-                          {priceLabel === 'Free' ? (isEnrolled ? 'Enrolled' : 'Enroll for Free') : 'Buy Now'}
-                        </button>
-
-                        {priceLabel === 'Free' && isEnrolled && (
+                        {isEnrolled ? (
                           <button
                             className="w-full inline-flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                             onClick={() => router.push('/my-courses')}
                           >
-                            Go to My Courses
+                            Go to My Course
                           </button>
+                        ) : priceLabel === 'Free' ? (
+                          <button
+                            className="w-full inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={enrolling}
+                            onClick={async () => {
+                              if (!user?.id) {
+                                router.push('/login');
+                                return;
+                              }
+                              try {
+                                setEnrolling(true);
+                                await instructorService.enrollCourse({ userId: user.id, courseId: String(course.id) });
+                                setIsEnrolled(true);
+                                success('Enrolled successfully!');
+                                setTimeout(() => router.push('/my-courses'), 1200);
+                              } catch (e: any) {
+                                showError(e?.message || 'Failed to enroll');
+                              } finally {
+                                setEnrolling(false);
+                              }
+                            }}
+                          >
+                            Enroll for Free
+                          </button>
+                        ) : (
+                          <CoursePayment
+                            courseId={String(course.id)}
+                            courseTitle={course.title}
+                            price={finalPrice}
+                            currency={course.currency}
+                            receiverAddress={(rawCourse as any)?.coursePaymentMethods?.[0]?.receiverAddress}
+                            coursePaymentMethodId={(rawCourse as any)?.coursePaymentMethods?.[0]?.id}
+                            onPaymentSuccess={() => {
+                              setIsEnrolled(true);
+                              setTimeout(() => router.push('/my-courses'), 1200);
+                            }}
+                          />
                         )}
                       </div>
                     </div>
