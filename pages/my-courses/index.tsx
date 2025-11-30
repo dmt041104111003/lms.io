@@ -3,11 +3,10 @@ import Layout from '@/components/layout/Layout';
 import SEO from '@/components/ui/SEO';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import progressService, { ProgressResponse, ProgressEntity } from '@/services/progressService';
+import progressService, { ProgressResponse } from '@/services/progressService';
 import feedbackService from '@/services/feedbackService';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ui/ToastContainer';
-import { ToastData } from '@/types/toast';
 
 const MyCoursesPage: React.FC = () => {
   const router = useRouter();
@@ -104,13 +103,10 @@ const MyCoursesPage: React.FC = () => {
       // First update course completion status
       await progressService.updateCourseCompletionStatus(user.id, courseId);
       
-      // Then request certificate
-      const response = await progressService.requestCertificate(user.id, courseId);
-      
       // Mark certificate as requested for this course
       setCertificateRequested(prev => new Set(Array.from(prev).concat([courseId])));
       
-      toastSuccess(response.message || 'Certificate requested successfully! The educator will be notified to mint your certificate.');
+      toastSuccess('Course marked completed. Certificate request is pending approval.');
     } catch (error: any) {
       toastError(error.message || 'Failed to request certificate. Please try again.');
     } finally {
@@ -251,7 +247,7 @@ const MyCoursesPage: React.FC = () => {
         </div>
       )}
 
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </>
   );
 };

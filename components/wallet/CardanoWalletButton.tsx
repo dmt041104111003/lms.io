@@ -32,18 +32,6 @@ interface WalletInfo {
   installed: boolean;
 }
 
-declare global {
-  interface Window {
-    cardano?: {
-      [walletName: string]: {
-        enable: () => Promise<CardanoWallet>;
-        isEnabled: () => Promise<boolean>;
-        name: string;
-        icon: string;
-      };
-    };
-  }
-}
 
 const MAINNET_NETWORK_ID = 1;
 
@@ -89,9 +77,9 @@ const CardanoWalletButton: React.FC<CardanoWalletButtonProps> = ({
     // Detect available Cardano wallets
     const detectWallets = () => {
       const wallets: WalletInfo[] = [];
-      if (typeof window !== 'undefined' && window.cardano) {
+      if (typeof window !== 'undefined' && (window as any).cardano) {
         Object.keys(WALLET_CONFIG).forEach(walletKey => {
-          if (window.cardano?.[walletKey]) {
+          if ((window as any).cardano?.[walletKey]) {
             const config = WALLET_CONFIG[walletKey];
             wallets.push({
               name: walletKey,
@@ -115,7 +103,7 @@ const CardanoWalletButton: React.FC<CardanoWalletButtonProps> = ({
     setIsConnecting(true);
     setShowWalletList(false);
     try {
-      const walletApi = window.cardano?.[walletName];
+      const walletApi = (window as any).cardano?.[walletName];
       if (!walletApi) {
         error('Wallet not found. Please install a Cardano wallet extension.');
         setIsConnecting(false);
