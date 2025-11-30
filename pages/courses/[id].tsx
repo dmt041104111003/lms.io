@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import SEO from '@/components/ui/SEO';
 import Card from '@/components/ui/Card';
 import instructorService, { CourseResponse, InstructorProfileResponse } from '@/services/instructorService';
+import CourseCard from '@/components/course/CourseCard';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import ToastContainer from '@/components/ui/ToastContainer';
@@ -744,24 +745,20 @@ const CourseDetailPage: React.FC = () => {
                       })
                       .slice(0, visibleMoreCount)
                       .map((c) => (
-                      <a key={c.id} href={`/courses/${c.id}`} className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow overflow-hidden">
-                        <div className="relative w-full h-40 bg-gray-100">
-                          {c.imageUrl ? (
-                            <img src={c.imageUrl} alt={c.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">📚</div>
-                          )}
-                        </div>
-                        <div className="p-4">
-                          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 min-h-[2.5rem]">{c.title}</h3>
-                          <div className="mt-2 text-xs text-gray-600 flex items-center justify-between">
-                            <span>{(c as any).courseType || 'N/A'}</span>
-                            {typeof c.price === 'number' && (
-                              <span className="font-semibold text-gray-900">${c.price}</span>
-                            )}
-                          </div>
-                        </div>
-                      </a>
+                        <CourseCard
+                          key={c.id as any}
+                          id={String(c.id)}
+                          title={c.title}
+                          image={c.imageUrl}
+                          originalPrice={typeof c.price === 'number' ? c.price : 0}
+                          discountPercent={Number((c as any).discount || 0)}
+                          currency={(c as any).currency}
+                          courseType={c.courseType}
+                          rating={(c as any).rating}
+                          instructor={(c as any).instructorName || (instructor?.name || '')}
+                          educatorAvatar={(c as any).instructorAvatar || (c as any).educatorAvatar || instructor?.avatar}
+                          enrollmentCount={(c as any).enrollmentCount ?? (c as any).numOfStudents}
+                        />
                     ))}
                   </div>
                   {(
