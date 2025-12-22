@@ -83,7 +83,7 @@ const Profile: React.FC = () => {
 
                   {activeTab === 'preferences' && (<PreferencesTab />)}
                   {activeTab === 'payments' && (<PaymentHistoryTab userId={user.id} />)}
-                  {activeTab === 'certificates' && (<CertificatesTab />)}
+                  {activeTab === 'certificates' && (<CertificatesTab userId={user.id} />)}
 
                   <LogoutButton onLogout={handleLogout} />
                 </>
