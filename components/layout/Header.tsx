@@ -1,14 +1,16 @@
 import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FiMenu, FiX } from 'react-icons/fi';
+import { FiMenu, FiX, FiMessageSquare } from 'react-icons/fi';
 import Logo from '@/components/ui/logo';
 import { useAuth } from '@/hooks/useAuth';
+import ChatDialog from '@/components/chat/ChatDialog';
 
 const Header: React.FC = () => {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const displayName = user ? (user.fullName?.trim() || (user.email?.split('@')[0] || '')) : '';
   const initials = user?.fullName?.trim()
@@ -26,6 +28,7 @@ const Header: React.FC = () => {
   };
 
   return (
+    <>
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 lg:gap-6 h-16">
@@ -80,6 +83,14 @@ const Header: React.FC = () => {
             {isAuthenticated && user ? (
                   /* User Menu - Desktop */
                   <div className="hidden md:flex items-center gap-3">
+                    <button
+                      onClick={() => setChatOpen(true)}
+                      className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+                      aria-label="Open messages"
+                      title="Messages"
+                    >
+                      <FiMessageSquare size={20} />
+                    </button>
                     {user.role?.name === 'ADMIN' && (
                       <Link
                         href="/admin"
@@ -143,6 +154,17 @@ const Header: React.FC = () => {
                     </Link>
                   </div>
                 )}
+
+            {isAuthenticated && (
+              <button
+                onClick={() => setChatOpen(true)}
+                className="md:hidden p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md"
+                aria-label="Open messages"
+                title="Messages"
+              >
+                <FiMessageSquare size={20} />
+              </button>
+            )}
 
             {/* Mobile menu button */}
             <button
@@ -273,6 +295,8 @@ const Header: React.FC = () => {
         </div>
       )}
     </header>
+    <ChatDialog open={chatOpen} onClose={() => setChatOpen(false)} />
+    </>
   );
 };
 

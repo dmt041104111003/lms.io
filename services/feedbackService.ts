@@ -54,6 +54,23 @@ const feedbackService = {
       method: 'GET',
     });
   },
+  
+  // Visibility controls (requires backend support)
+  async hide(feedbackId: number): Promise<void> {
+    return apiRequest<void>(`/api/feedbacks/${encodeURIComponent(String(feedbackId))}/hide`, {
+      method: 'PUT',
+    });
+  },
+  async show(feedbackId: number): Promise<void> {
+    return apiRequest<void>(`/api/feedbacks/${encodeURIComponent(String(feedbackId))}/show`, {
+      method: 'PUT',
+    });
+  },
+  async remove(feedbackId: number): Promise<void> {
+    return apiRequest<void>(`/api/feedbacks/${encodeURIComponent(String(feedbackId))}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 export default feedbackService;

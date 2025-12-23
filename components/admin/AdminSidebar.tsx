@@ -2,6 +2,13 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import authService from '@/services/authService';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Tag as TagIcon, 
+  Home, 
+  LogOut 
+} from 'lucide-react';
 
 interface AdminSidebarProps {
   onMenuClick?: () => void;
@@ -28,9 +35,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onMenuClick }) => {
   };
 
   const menuItems = [
-    { path: '/admin', label: 'Dashboard' },
-    { path: '/admin/users', label: 'Users' },
-    { path: '/admin/tags', label: 'Tags' },
+    { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/admin/users', label: 'Users', icon: Users },
+    { path: '/admin/tags', label: 'Tags', icon: TagIcon },
   ];
 
   return (
@@ -44,12 +51,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onMenuClick }) => {
               key={item.path}
               href={item.path}
               onClick={onMenuClick}
-              className={`block px-3 py-2 text-sm transition-colors border-b-2 ${
+              className={`flex items-center gap-3 px-3 py-2 text-sm transition-colors border-b-2 ${
                 isActive
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
+              <item.icon size={18} />
               {item.label}
             </Link>
           );
@@ -60,8 +68,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onMenuClick }) => {
         <Link
           href="/home"
           onClick={onMenuClick}
-          className="block px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-3 px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
         >
+          <Home size={18} />
           Back to Home
         </Link>
         <button
@@ -69,8 +78,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ onMenuClick }) => {
             handleLogout();
             if (onMenuClick) onMenuClick();
           }}
-          className="w-full text-left px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
+          className="w-full flex items-center gap-3 text-left px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
         >
+          <LogOut size={18} />
           Logout
         </button>
       </div>

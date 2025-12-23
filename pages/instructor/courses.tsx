@@ -9,6 +9,7 @@ import { courseService } from '@/services/courseService';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
+import { BookOpen, Plus, Search, Filter } from 'lucide-react';
 
 const InstructorCourses: React.FC = () => {
   const router = useRouter();
@@ -17,6 +18,8 @@ const InstructorCourses: React.FC = () => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchCourses = async () => {
     setLoading(true);
@@ -45,23 +48,58 @@ const InstructorCourses: React.FC = () => {
       <InstructorLayout>
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Courses Management</h1>
-              <p className="text-gray-600 mt-1">Create and manage your courses</p>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <BookOpen className="text-blue-600" size={28} />
+                  <h1 className="text-2xl font-bold text-gray-900">Courses Management</h1>
+                </div>
+                <p className="text-gray-600">Create and manage your courses</p>
+              </div>
+              <Button
+                onClick={() => router.push('/instructor/courses/create')}
+                className="flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Create New Course
+              </Button>
             </div>
-            <Button
-              onClick={() => router.push('/instructor/courses/create')}
-              className="w-full sm:w-auto"
-            >
-              Create New Course
-            </Button>
           </div>
+
+          {/* Search and Filters */}
+          <Card className="p-4 bg-white shadow-sm border border-gray-100">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search courses..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter size={16} />
+                Filters
+              </Button>
+            </div>
+          </Card>
 
           {/* Courses Table */}
           {loading ? (
-            <Card className="p-8 text-center">
-              <div className="text-gray-600">Loading courses...</div>
+            <Card className="p-12 text-center bg-white shadow-sm border border-gray-100">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-gray-600 font-medium">Loading courses...</div>
+              </div>
             </Card>
           ) : courses && courses.content && courses.content.length > 0 ? (
             <>
@@ -101,8 +139,8 @@ const InstructorCourses: React.FC = () => {
               
               {/* Pagination */}
               {courses.totalPages > 1 && (
-                <Card className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3">
-                  <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
+                <Card className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white shadow-sm border border-gray-100">
+                  <div className="text-sm text-gray-700 text-center sm:text-left">
                     Showing {page * size + 1} to {Math.min((page + 1) * size, courses.totalElements)} of {courses.totalElements} courses
                   </div>
                   <div className="flex gap-2">
@@ -111,6 +149,7 @@ const InstructorCourses: React.FC = () => {
                       disabled={page === 0}
                       variant="outline"
                       size="sm"
+                      className="flex items-center gap-1"
                     >
                       Previous
                     </Button>
@@ -119,6 +158,7 @@ const InstructorCourses: React.FC = () => {
                       disabled={page >= courses.totalPages - 1}
                       variant="outline"
                       size="sm"
+                      className="flex items-center gap-1"
                     >
                       Next
                     </Button>
@@ -127,8 +167,19 @@ const InstructorCourses: React.FC = () => {
               )}
             </>
           ) : (
-            <Card className="p-12 text-center">
-              <div className="text-gray-600">No courses found</div>
+            <Card className="p-12 text-center bg-white shadow-sm border border-gray-100">
+              <div className="flex flex-col items-center gap-4">
+                <BookOpen className="text-gray-300 mb-2" size={48} />
+                <div className="text-gray-600 font-medium text-lg">No courses found</div>
+                <p className="text-gray-400 text-sm">Create your first course to get started</p>
+                <Button
+                  onClick={() => router.push('/instructor/courses/create')}
+                  className="flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  Create Your First Course
+                </Button>
+              </div>
             </Card>
           )}
         </div>

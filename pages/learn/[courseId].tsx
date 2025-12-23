@@ -10,6 +10,7 @@ import LectureInfo from '@/components/learn/LectureInfo';
 import TestView from '@/components/learn/TestView';
 import CourseSidebar from '@/components/learn/CourseSidebar';
 import Dialog from '@/components/ui/Dialog';
+import QnaPanel from '@/components/learn/QnaPanel';
 import instructorService, { TestDetailResponse, QuestionResponse } from '@/services/instructorService';
 import progressService from '@/services/progressService';
 
@@ -77,6 +78,7 @@ const LearnPage: React.FC = () => {
   const [completedTestIds, setCompletedTestIds] = useState<number[]>([]);
   const [isCourseMarkedCompleted, setIsCourseMarkedCompleted] = useState(false);
   const [requestingCertificate, setRequestingCertificate] = useState(false);
+  const [qnaOpen, setQnaOpen] = useState(false);
 
   const pingLectureOnce = async () => {
     if (!user?.id || !courseId || typeof courseId !== 'string' || !selectedLecture?.id) return;
@@ -411,6 +413,7 @@ const LearnPage: React.FC = () => {
   const totalItems = allLectures.length + allTests.length;
   const completedItems = completedLectureIds.length + completedTestIds.length;
   const isCourseCompleted = totalItems > 0 && completedItems === totalItems;
+  const currentLectureId = selectedLecture?.id ? Number(selectedLecture.id) : undefined;
 
   return (
     <>
@@ -491,6 +494,18 @@ const LearnPage: React.FC = () => {
                         <p className="text-sm text-gray-600 whitespace-pre-line line-clamp-4">{course.description}</p>
                       </div>
                     )}
+                    {/* Q&A open button within the main content section (bottom-right, sticky) */}
+                    <div className="sticky bottom-4 mt-6 z-10">
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => setQnaOpen(true)}
+                          className="px-4 py-3 bg-orange-500 text-white font-medium rounded-full shadow-lg hover:bg-orange-600"
+                          aria-label="Open Q&A"
+                        >
+                          Hỏi đáp
+                        </button>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
@@ -545,6 +560,14 @@ const LearnPage: React.FC = () => {
           type="default"
         />
       )}
+
+      {/* Q&A Panel */}
+      <QnaPanel
+        open={qnaOpen}
+        onClose={() => setQnaOpen(false)}
+        lectureId={currentLectureId}
+        currentUserId={user?.id}
+      />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

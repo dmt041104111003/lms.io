@@ -2,6 +2,17 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import authService from '@/services/authService';
+import { 
+  LayoutDashboard, 
+  BookOpen, 
+  PlusCircle, 
+  Users, 
+  Bell, 
+  MessageSquare, 
+  HelpCircle, 
+  Home, 
+  LogOut 
+} from 'lucide-react';
 
 interface InstructorSidebarProps {
   onMenuClick?: () => void;
@@ -36,94 +47,72 @@ const InstructorSidebar: React.FC<InstructorSidebarProps> = ({ onMenuClick }) =>
     }
   };
 
+  const menuItems = [
+    { path: '/instructor', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/instructor/courses', label: 'Course Management', icon: BookOpen },
+    { path: '/instructor/courses/create', label: 'Create Course', icon: PlusCircle },
+    { path: '/instructor/enrollment', label: 'Enrollment', icon: Users },
+    { path: '/instructor/notifications', label: 'Notifications', icon: Bell },
+    { path: '/instructor/feedback', label: 'Feedback', icon: MessageSquare },
+    { path: '/instructor/qna', label: 'Q&A', icon: HelpCircle },
+  ];
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0 pt-16 flex flex-col">
-      <nav className="p-4 space-y-1 flex-1">
-        {/* Dashboard */}
-        <Link
-          href="/instructor"
-          onClick={onMenuClick}
-          className={`block px-3 py-2 text-sm transition-colors ${
-            isActiveRoute('/instructor')
-              ? 'text-blue-600 font-medium'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Dashboard
-        </Link>
-
-        {/* Course */}
-        <div className="font-semibold text-gray-900 px-3 py-2 text-sm">
-          Course
-        </div>
-        
-        <Link
-          href="/instructor/courses"
-          onClick={onMenuClick}
-          className={`block px-6 py-2 text-sm transition-colors ${
-            isActiveRoute('/instructor/courses')
-              ? 'text-blue-600 font-medium'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Management
-        </Link>
-
-        <Link
-          href="/instructor/courses/create"
-          onClick={onMenuClick}
-          className={`block px-6 py-2 text-sm transition-colors ${
-            isActiveRoute('/instructor/courses/create')
-              ? 'text-blue-600 font-medium'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Create
-        </Link>
-
-        {/* Enrollment Management */}
-        <Link
-          href="/instructor/enrollment"
-          onClick={onMenuClick}
-          className={`block px-3 py-2 text-sm transition-colors ${
-            isActiveRoute('/instructor/enrollment')
-              ? 'text-blue-600 font-medium'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Enrollment
-        </Link>
-
-        {/* Notifications */}
-        <Link
-          href="/instructor/notifications"
-          onClick={onMenuClick}
-          className={`block px-3 py-2 text-sm transition-colors ${
-            isActiveRoute('/instructor/notifications')
-              ? 'text-blue-600 font-medium'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Notifications
-        </Link>
+    <aside className="w-64 bg-blue-50 min-h-screen fixed left-0 top-0 pt-16 flex flex-col shadow-2xl border-r border-gray-200">
+      <nav className="p-4 space-y-2 flex-1">
+        {menuItems.map((item) => {
+          const isActive = isActiveRoute(item.path);
+          
+          return (
+            <Link
+              key={item.path}
+              href={item.path}
+              onClick={onMenuClick}
+              className={`group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-300 ease-out ${
+                isActive
+                  ? 'bg-blue-600 text-white shadow-lg transform scale-105'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:shadow-md hover:transform hover:scale-[1.02]'
+              }`}
+            >
+              <item.icon 
+                size={20} 
+                className={`transition-all duration-300 ${
+                  isActive ? 'text-white drop-shadow-sm' : 'text-gray-500 group-hover:text-blue-600'
+                }`}
+              />
+              <span className="transition-all duration-300">{item.label}</span>
+              {isActive && (
+                <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              )}
+            </Link>
+          );
+        })}
       </nav>
       
-      <div className="p-4 border-t border-gray-200 space-y-1">
+      <div className="p-4 border-t border-gray-200 space-y-2">
         <Link
           href="/home"
           onClick={onMenuClick}
-          className="block px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
+          className="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-gray-700 hover:bg-white hover:text-blue-600 transition-all duration-300 ease-out hover:shadow-md hover:transform hover:scale-[1.02]"
         >
-          Back to Home
+          <Home 
+            size={20} 
+            className="text-gray-500 group-hover:text-blue-600 transition-all duration-300" 
+          />
+          <span>Back to Home</span>
         </Link>
         <button
           onClick={() => {
             handleLogout();
             if (onMenuClick) onMenuClick();
           }}
-          className="w-full text-left px-3 py-2 text-sm transition-colors border-b-2 border-transparent text-gray-600 hover:text-gray-900"
+          className="w-full group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-300 ease-out hover:shadow-md hover:transform hover:scale-[1.02]"
         >
-          Logout
+          <LogOut 
+            size={20} 
+            className="text-gray-500 group-hover:text-red-600 transition-all duration-300" 
+          />
+          <span>Logout</span>
         </button>
       </div>
     </aside>

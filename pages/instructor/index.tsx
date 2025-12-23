@@ -9,6 +9,7 @@ import instructorService, { CourseDashboardResponse } from '@/services/instructo
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import ToastContainer from '@/components/ui/ToastContainer';
+import { BarChart3, Users, DollarSign, BookOpen, TrendingUp, Award, Clock } from 'lucide-react';
 
 const InstructorDashboard: React.FC = () => {
   const router = useRouter();
@@ -92,41 +93,77 @@ const InstructorDashboard: React.FC = () => {
         nofollow={true}
       />
       <InstructorLayout>
-        <div className="space-y-4 sm:space-y-6">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Dashboard</h2>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">Overview of your courses and students</p>
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div className="flex items-center gap-3 mb-2">
+              <BarChart3 className="text-blue-600" size={28} />
+              <h2 className="text-2xl font-bold text-gray-900">Instructor Dashboard</h2>
+            </div>
+            <p className="text-gray-600">Manage your courses, track student progress, and view analytics</p>
           </div>
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4">
-              <div className="text-sm text-gray-600">Total Courses</div>
-              <div className="text-2xl font-semibold text-gray-900 mt-1">{totalCourses}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="p-6 bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-600">Total Courses</div>
+                  <div className="text-3xl font-bold text-gray-900 mt-2">{totalCourses}</div>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <BookOpen className="text-blue-600" size={24} />
+                </div>
+              </div>
             </Card>
-            <Card className="p-4">
-              <div className="text-sm text-gray-600">Total Students</div>
-              <div className="text-2xl font-semibold text-gray-900 mt-1">{totalStudents}</div>
+            <Card className="p-6 bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-600">Total Students</div>
+                  <div className="text-3xl font-bold text-gray-900 mt-2">{totalStudents}</div>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <Users className="text-green-600" size={24} />
+                </div>
+              </div>
             </Card>
-            <Card className="p-4">
-              <div className="text-sm text-gray-600">Total Enrollments</div>
-              <div className="text-2xl font-semibold text-gray-900 mt-1">{totalEnrollments}</div>
+            <Card className="p-6 bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-600">Total Enrollments</div>
+                  <div className="text-3xl font-bold text-gray-900 mt-2">{totalEnrollments}</div>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <TrendingUp className="text-purple-600" size={24} />
+                </div>
+              </div>
             </Card>
-            <Card className="p-4">
-              <div className="text-sm text-gray-600">Total Revenue</div>
-              <div className="text-2xl font-semibold text-gray-900 mt-1">${totalRevenue.toFixed(2)}</div>
+            <Card className="p-6 bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-600">Total Revenue</div>
+                  <div className="text-3xl font-bold text-gray-900 mt-2">${totalRevenue.toFixed(2)}</div>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <DollarSign className="text-yellow-600" size={24} />
+                </div>
+              </div>
             </Card>
           </div>
 
           {/* Quick Actions */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="flex flex-col sm:flex-row gap-3">
+          <Card className="p-6 bg-white shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="text-blue-600" size={20} />
+              <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Button
                 onClick={() => router.push('/instructor/courses')}
                 variant="primary"
                 size="sm"
+                className="flex items-center justify-center gap-2"
               >
+                <BookOpen size={16} />
                 Manage Courses
               </Button>
               <Button
@@ -151,14 +188,18 @@ const InstructorDashboard: React.FC = () => {
                 }}
                 variant="outline"
                 size="sm"
+                className="flex items-center justify-center gap-2"
               >
+                <Users size={16} />
                 Edit Profile
               </Button>
               <Button
                 onClick={() => router.push('/instructor/courses/create')}
                 variant="outline"
                 size="sm"
+                className="flex items-center justify-center gap-2"
               >
+                <BookOpen size={16} />
                 Create New Course
               </Button>
             </div>
@@ -166,24 +207,35 @@ const InstructorDashboard: React.FC = () => {
 
           {/* Course Statistics */}
           {dashboardData.length > 0 && (
-            <Card className="p-4 sm:p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Statistics</h3>
-              <div className="space-y-3">
+            <Card className="p-6 bg-white shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="text-blue-600" size={20} />
+                <h3 className="text-lg font-semibold text-gray-900">Course Statistics</h3>
+              </div>
+              <div className="space-y-4">
                 {dashboardData.slice(0, 5).map((course) => (
-                  <div key={course.courseId} className="border-b border-gray-200 pb-3 last:border-0">
+                  <div key={course.courseId} className="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">{course.courseTitle}</div>
-                        <div className="text-xs text-gray-600 mt-1">
-                          {course.totalStudents || 0} students • ${(course.revenue || 0).toFixed(2)} revenue
+                        <div className="text-sm font-semibold text-gray-900 truncate mb-2">{course.courseTitle}</div>
+                        <div className="flex items-center gap-4 text-xs text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Users size={12} />
+                            {course.totalStudents || 0} students
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <DollarSign size={12} />
+                            ${(course.revenue || 0).toFixed(2)} revenue
+                          </div>
                         </div>
                       </div>
                       <Button
                         onClick={() => setSelectedCourse(course)}
                         variant="outline"
                         size="sm"
-                        className="ml-4"
+                        className="ml-4 flex items-center gap-1"
                       >
+                        <Clock size={14} />
                         View Details
                       </Button>
                     </div>

@@ -9,8 +9,9 @@ import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/hooks/useAuth';
 import ToastContainer from '@/components/ui/ToastContainer';
 import CoursePayment from '@/components/payment/CoursePayment';
-import { FiTag, FiClock, FiBookOpen, FiCheckSquare, FiCalendar, FiRefreshCw, FiChevronDown, FiPlayCircle, FiFileText } from 'react-icons/fi';
+import { FiTag, FiClock, FiBookOpen, FiCheckSquare, FiCalendar, FiRefreshCw, FiChevronDown, FiPlayCircle, FiFileText, FiMessageSquare } from 'react-icons/fi';
 import feedbackService, { FeedbackItem } from '@/services/feedbackService';
+import ChatDialog from '@/components/chat/ChatDialog';
 
 interface ChapterSummary {
   id: number;
@@ -90,6 +91,8 @@ const CourseDetailPage: React.FC = () => {
   const [fbContent, setFbContent] = useState<FeedbackItem[]>([]);
   const [fbTotalPages, setFbTotalPages] = useState(0);
   const [fbTotalElements, setFbTotalElements] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatPeer, setChatPeer] = useState<{ id: string; name?: string } | null>(null);
 
   useEffect(() => {
     if (!id || typeof id !== 'string') return;
@@ -906,6 +909,25 @@ const CourseDetailPage: React.FC = () => {
                             <span>Updated {formatDate(course.updatedAt)}</span>
                           </li>
                         </ul>
+                        {(course.instructorUserId || (instructor as any)?.userId) && (
+                          <button
+                            className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md border border-blue-300 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors"
+                            onClick={() => {
+                              if (!user?.id) {
+                                router.push('/login');
+                                return;
+                              }
+                              const peerId = String(course.instructorUserId || (instructor as any)?.userId || '');
+                              const peerName = instructor?.name || 'Instructor';
+                              if (!peerId) return;
+                              setChatPeer({ id: peerId, name: peerName });
+                              setChatOpen(true);
+                            }}
+                          >
+                            <FiMessageSquare />
+                            Chat with instructor
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -918,6 +940,7 @@ const CourseDetailPage: React.FC = () => {
         </div>
       </Layout>
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ChatDialog open={chatOpen} onClose={() => setChatOpen(false)} initialPeer={chatPeer} />
     </>
   );
 }
